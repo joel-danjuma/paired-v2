@@ -11,6 +11,10 @@ from app.models import init_db
 from app.api.v1 import api_router
 from app.middleware.performance import PerformanceMiddleware
 
+# Adjust DATABASE_URL for async driver
+if settings.database_url and settings.database_url.startswith("postgresql://"):
+    settings.database_url = settings.database_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+
 # Define the path for static files relative to the project root
 # This makes it work consistently whether run locally or in production
 STATIC_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "dist"))
