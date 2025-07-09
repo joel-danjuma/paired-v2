@@ -16,21 +16,16 @@ services:
           type: redis
           name: paired-redis
           property: connectionString
-      - key: PYTHON_VERSION
-        value: 3.10.13
-      - key: POETRY_VERSION
-        value: 1.5.1
       # Add other environment variables from your .env file here
       # For example:
       # - key: GOOGLE_API_KEY
       #   value: your_google_api_key
 
   # PostgreSQL database
-  - type: psql
+  - type: postgres
     name: paired-postgres
     ipAllowList: [] # Allow all
-    pgaisEnabled: false
-    version: "15"
+    postgres_version: 15
 
   # Redis instance for caching
   - type: redis
