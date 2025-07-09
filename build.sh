@@ -2,6 +2,10 @@
 # Exit on error
 set -o errexit
 
+# -- Install System Dependencies --
+echo "Installing system dependencies..."
+apt-get update && apt-get install -y libmagic1
+
 # -- Frontend Build --
 echo "Building frontend..."
 cd frontend
