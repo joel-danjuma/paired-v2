@@ -21,14 +21,14 @@ services:
       # - key: GOOGLE_API_KEY
       #   value: your_google_api_key
 
-  # PostgreSQL database
-  - type: postgres
-    name: paired-postgres
-    ipAllowList: [] # Allow all
-    postgres_version: 15
-
   # Redis instance for caching
   - type: redis
     name: paired-redis
     ipAllowList: [] # Allow all
-    maxmemoryPolicy: allkeys-lru 
+    maxmemoryPolicy: allkeys-lru
+
+databases:
+  # PostgreSQL database
+  - name: paired-postgres
+    ipAllowList: [] # Allow all
+    postgresMajorVersion: 15 
