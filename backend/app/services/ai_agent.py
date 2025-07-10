@@ -1,6 +1,7 @@
 from google.generativeai import GenerativeModel
 import google.generativeai as genai
 import json
+from typing import Optional
 from app.core.config import settings
 from app.schemas.agent import RoommatePreferences
 
@@ -48,4 +49,4 @@ class AIAgentService:
             return match.group()
         return None
 
-ai_agent_service = AIAgentService() 
+ai_agent_service = AIAgentService()

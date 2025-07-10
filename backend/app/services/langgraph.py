@@ -1,5 +1,4 @@
 from langgraph.graph import StateGraph, END
-from langgraph.checkpoints.aiopg import aget_conn
 from typing import TypedDict, List
 from app.schemas.agent import RoommatePreferences
 from app.services.ai_agent import ai_agent_service
@@ -22,10 +21,10 @@ class LangGraphService:
         self.app = self.workflow.compile(checkpointer=self.checkpointer)
 
     def _setup_checkpointer(self):
-        from langgraph.checkpoints import Checkpointer
+        from langgraph.checkpoint.aiopg import AiopgCheckpoint
         
-        return Checkpointer(
-            conn_string=settings.database_url.replace("asyncpg", "postgresql"),
+        return AiopgCheckpoint(
+            conn_details=settings.DATABASE_URL,
         )
         
     def _setup_workflow(self):

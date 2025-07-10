@@ -12,6 +12,10 @@ DATABASE_URL = os.getenv(
     "postgresql+asyncpg://paired_user:paired_password@localhost:5432/paired_db"
 )
 
+# Ensure the database URL is configured for asyncpg
+if DATABASE_URL.startswith("postgresql://"):
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
+
 # Create async engine
 engine = create_async_engine(
     DATABASE_URL,
