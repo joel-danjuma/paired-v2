@@ -51,6 +51,9 @@ class Settings(BaseSettings):
     # CORS
     cors_origins: List[str] = ["http://localhost:3000", "http://localhost:5173"]
     
+    # Trusted Hosts for Host Header validation
+    trusted_hosts: List[str] = ["localhost", "127.0.0.1", "*.onrender.com", "*.paired.com", "paired.com"]
+    
     # Third-party services
     checkr_api_key: Optional[str] = None
     stripe_secret_key: Optional[str] = None

@@ -55,11 +55,10 @@ app.add_middleware(
 )
 
 # Add trusted host middleware for production
-if settings.environment == "production":
-    app.add_middleware(
-        TrustedHostMiddleware,
-        allowed_hosts=["*.paired.com", "paired.com"]
-    )
+app.add_middleware(
+    TrustedHostMiddleware,
+    allowed_hosts=settings.trusted_hosts
+)
 
 # Include API routes
 app.include_router(api_router, prefix="/api/v1")
