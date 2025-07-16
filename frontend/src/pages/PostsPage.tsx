@@ -1,5 +1,6 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import PostCard from "@/components/PostCard";
@@ -9,23 +10,71 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Search, SlidersHorizontal } from "lucide-react";
-import { MOCK_POSTS } from "@/data/posts";
+import { toast } from "@/components/ui/sonner";
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1";
 
 const PostsPage = () => {
+  const [posts, setPosts] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLocation, setSelectedLocation] = useState<string>("all");
   const [priceRange, setPriceRange] = useState([0, 500000]); // Updated for Naira
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const { token } = useAuth();
+
+  useEffect(() => {
+    const fetchRecommendations = async () => {
+      if (!token) {
+        setIsLoading(false);
+        return;
+      }
+      setIsLoading(true);
+      try {
+        const response = await fetch(`${API_BASE_URL}/recommendations/listings`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!response.ok) throw new Error("Failed to fetch recommendations");
+        const data = await response.json();
+        setPosts(data);
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Failed to load recommendations.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchRecommendations();
+  }, [token]);
 
   // Handle search query
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, this would call an API with the search parameters
-    console.log("Searching with:", { searchQuery, selectedLocation, priceRange });
+    if (!token) return;
+    setIsLoading(true);
+    try {
+      const queryParams = new URLSearchParams({
+        query: searchQuery,
+        location: selectedLocation,
+        min_price: priceRange[0].toString(),
+        max_price: priceRange[1].toString(),
+      }).toString();
+
+      const response = await fetch(`${API_BASE_URL}/listings/search?${queryParams}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (!response.ok) throw new Error("Search failed");
+      const data = await response.json();
+      setPosts(data);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Search failed.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Filter posts based on search criteria
-  const filteredPosts = MOCK_POSTS.filter((post) => {
+  const filteredPosts = posts.filter((post) => {
     const matchesQuery =
       post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       post.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -41,7 +90,7 @@ const PostsPage = () => {
   });
 
   // Get unique locations for filter
-  const locations = Array.from(new Set(MOCK_POSTS.map(post => 
+  const locations = Array.from(new Set(posts.map(post => 
     post.location.split(',')[0].trim()
   )));
 
@@ -215,12 +264,14 @@ const PostsPage = () => {
             {/* Main Content Area */}
             <div className="lg:col-span-3">
               <div className="mb-4 text-sm text-gray-600">
-                Showing {filteredPosts.length} of {MOCK_POSTS.length} rooms
+                Showing {posts.length} rooms
               </div>
 
-              {filteredPosts.length > 0 ? (
+              {isLoading ? (
+                <p>Loading...</p>
+              ) : posts.length > 0 ? (
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
-                  {filteredPosts.map((post) => (
+                  {posts.map((post) => (
                     <PostCard key={post.id} post={post} />
                   ))}
                 </div>

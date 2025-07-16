@@ -70,4 +70,7 @@ class Listing(Base):
     user = relationship("User", back_populates="listings")
     
     def __repr__(self):
-        return f"<Listing(id={self.id}, title={self.title}, type={self.listing_type})>" 
+        return f"<Listing(id={self.id}, title={self.title}, type={self.listing_type})>"
+
+    def to_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns} 

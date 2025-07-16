@@ -222,6 +222,24 @@ async def get_similar_listings(
         "total": len(recommendations)
     }
 
+@router.get("/recommendations/listings", response_model=List[Dict[str, Any]])
+async def get_listing_recommendations_for_user(
+    current_user: User = Depends(get_current_user),
+    limit: int = Query(20, description="Number of recommendations"),
+    db: AsyncSession = Depends(get_db_session)
+):
+    """Get listing recommendations for the current user."""
+    # This is a simplified implementation. A real implementation would
+    # use a more sophisticated recommendation algorithm.
+    from app.models.listing import Listing
+    
+    query = select(Listing).where(Listing.status == "active").limit(limit)
+    result = await db.execute(query)
+    listings = result.scalars().all()
+    
+    return [listing.to_dict() for listing in listings]
+
+
 @router.post("/content/find-by-interests")
 async def find_users_by_interests(
     interests: List[str],
