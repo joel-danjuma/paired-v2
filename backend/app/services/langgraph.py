@@ -21,10 +21,10 @@ class LangGraphService:
         self.app = self.workflow.compile(checkpointer=self.checkpointer)
 
     def _setup_checkpointer(self):
-        from langgraph.checkpoint.aiopg import AiopgCheckpoint
+        from langgraph.checkpoints.aiopg import AsyncPGCheckpoint
         
-        return AiopgCheckpoint(
-            conn_details=settings.DATABASE_URL,
+        return AsyncPGCheckpoint.from_conn_string(
+            conn_string=settings.DATABASE_URL,
         )
         
     def _setup_workflow(self):
