@@ -1,4 +1,4 @@
-# Paired - Your AI-Powered Roommate Matching Platform
+clea# Paired - Your AI-Powered Roommate Matching Platform
 
 Paired is a modern web application designed to help you find the perfect roommate. Our intelligent platform uses AI to understand your preferences and match you with compatible individuals, making the search for a roommate seamless and efficient.
 
