@@ -2,6 +2,7 @@
 import React from "react";
 import { Bot, User } from "lucide-react";
 import { ChatMessage as ChatMessageType } from "@/types/chat";
+import ListingCard from "./ListingCard";
 
 type ChatMessageProps = {
   message: ChatMessageType;
@@ -31,14 +32,9 @@ const ChatMessage = ({ message }: ChatMessageProps) => {
         <p className="text-sm">{message.content}</p>
       </div>
       {message.tool_outputs && message.tool_outputs.length > 0 && (
-        <div className="mt-2 w-full">
+        <div className="mt-2 w-full grid gap-4">
           {message.tool_outputs.map((output: any, index: number) => (
-            <div key={index} className="p-2 my-1 text-xs bg-gray-50 rounded-lg">
-              <p className="font-semibold">Tool Output:</p>
-              <pre className="whitespace-pre-wrap">
-                {JSON.stringify(output, null, 2)}
-              </pre>
-            </div>
+            <ListingCard key={index} listing={output} />
           ))}
         </div>
       )}
