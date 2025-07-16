@@ -49,7 +49,11 @@ class Settings(BaseSettings):
     aws_s3_bucket: Optional[str] = None
     
     # CORS
-    cors_origins: List[str] = ["http://localhost:3000", "http://localhost:5173"]
+    cors_origins: List[str] = [
+        "http://localhost:3000", 
+        "http://localhost:5173",
+        "https://paired-v2.onrender.com"
+    ]
     
     # Trusted Hosts for Host Header validation
     trusted_hosts: List[str] = ["localhost", "127.0.0.1", "*.onrender.com", "*.paired.com", "paired.com"]
