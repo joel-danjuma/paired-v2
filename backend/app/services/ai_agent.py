@@ -1,52 +1,94 @@
-from google.generativeai import GenerativeModel
 import google.generativeai as genai
-import json
-from typing import Optional
+from typing import List
 from app.core.config import settings
-from app.schemas.agent import RoommatePreferences
+from app.schemas.conversation import Message
+
+# Configure the generative AI model
+genai.configure(api_key=settings.google_api_key)
+
+# --- Define Tools --- #
+
+def search_for_listings(city: str, max_budget: int, min_bedrooms: int = 1):
+    """
+    Searches for rental listings based on specified criteria.
+
+    Args:
+        city: The city to search in.
+        max_budget: The maximum budget for the rent.
+        min_bedrooms: The minimum number of bedrooms required.
+    
+    Returns:
+        A list of listings that match the criteria.
+    """
+    # In a real implementation, this would query the database.
+    # For now, we'll return some dummy data.
+    print(f"Searching for listings in {city} with a max budget of {max_budget} and at least {min_bedrooms} bedroom(s)...")
+    return [
+        {"address": "123 Main St", "city": city, "rent": 1400, "bedrooms": min_bedrooms},
+        {"address": "456 Oak Ave", "city": city, "rent": 1450, "bedrooms": min_bedrooms},
+    ]
+
+# --- AI Agent Service --- #
 
 class AIAgentService:
-    def __init__(self):
-        if not settings.google_api_key:
-            raise ValueError("Google API key is not configured.")
-            
-        genai.configure(api_key=settings.google_api_key)
-        self.model = GenerativeModel('gemini-1.5-flash')
-
-    async def extract_preferences(self, query: str) -> RoommatePreferences:
+    def __init__(self, tools: List[callable] = None):
         """
-        Extract structured roommate preferences from a natural language query.
+        Initializes the AI Agent Service.
+        
+        Args:
+            tools: A list of callable functions that the agent can use.
         """
-        try:
-            prompt = (
-                f"Extract the user's roommate preferences from the following query: '{query}'\n"
-                "Focus on details like city, budget, cleanliness, social habits, and desired roommate characteristics.\n"
-                f"Return the result as a JSON object that conforms to this Pydantic schema:\n{RoommatePreferences.schema_json(indent=2)}"
-            )
-            
-            response = await self.model.generate_content_async(prompt)
-            
-            # Extract JSON from the response text
-            json_text = self._extract_json(response.text)
-            
-            if json_text:
-                preferences_dict = json.loads(json_text)
-                return RoommatePreferences(**preferences_dict)
-            else:
-                return RoommatePreferences()
+        self.model = genai.GenerativeModel(
+            model_name='gemini-1.5-flash',
+            tools=tools,
+        )
 
-        except Exception as e:
-            # Handle potential errors from the LLM API
-            print(f"Error extracting preferences: {e}")
-            # Fallback to a default or empty response
-            return RoommatePreferences()
+    async def chat(self, conversation_history: List[Message]) -> str:
+        """
+        Handles a chat interaction with the AI agent, including tool calls.
 
-    def _extract_json(self, text: str) -> Optional[str]:
-        """Extracts the first valid JSON object from a string."""
-        import re
-        match = re.search(r'\{.*\}', text, re.DOTALL)
-        if match:
-            return match.group()
-        return None
+        Args:
+            conversation_history: A list of messages in the conversation.
 
-ai_agent_service = AIAgentService()
+        Returns:
+            The agent's response as a string.
+        """
+        # Start a chat session with the model
+        chat_session = self.model.start_chat(
+            history=[{"role": "user", "parts": [msg.content]} for msg in conversation_history[:-1]]
+        )
+        
+        # Get the latest message from the user
+        latest_message = conversation_history[-1].content
+        
+        # Send the message to the model
+        response = chat_session.send_message(latest_message)
+        
+        # Check if the model wants to call a tool
+        if response.function_calls:
+            # For now, we'll just handle the first tool call
+            function_call = response.function_calls[0]
+            
+            # Find the corresponding tool function
+            tool_function = next((t for t in self.tools if t.__name__ == function_call.name), None)
+            
+            if tool_function:
+                # Call the tool with the arguments provided by the model
+                tool_response = tool_function(**function_call.args)
+                
+                # Send the tool's response back to the model
+                response = chat_session.send_message(
+                    {"function_response": {"name": function_call.name, "response": tool_response}}
+                )
+
+        return response.text
+
+# --- Instantiate the Service --- #
+
+# A dictionary to map tool names to their functions
+tools = {
+    "search_for_listings": search_for_listings,
+}
+
+# Instantiate the service with the defined tools
+ai_agent_service = AIAgentService(tools=list(tools.values()))
