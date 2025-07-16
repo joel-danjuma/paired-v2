@@ -3,6 +3,9 @@ FROM node:18-alpine AS frontend-builder
 
 WORKDIR /app/frontend
 
+# Add a build argument to accept the API URL
+ARG VITE_API_URL
+
 # Copy frontend package.json and lock files
 COPY frontend/package.json frontend/package-lock.json* ./
 
@@ -12,8 +15,8 @@ RUN npm install
 # Copy the rest of the frontend code
 COPY frontend/ ./
 
-# Build the frontend
-RUN npm run build
+# Build the frontend, passing the API URL as an environment variable
+RUN VITE_API_URL=$VITE_API_URL npm run build
 
 # Stage 2: Build the backend with the frontend assets
 FROM python:3.10-slim
