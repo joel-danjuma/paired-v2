@@ -17,7 +17,7 @@ class Message(BaseModel):
     created_at: datetime
     
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class ConversationCreate(BaseModel):
     participants: List[UUID] = Field(..., min_items=2, max_items=2)
@@ -34,7 +34,7 @@ class Conversation(BaseModel):
     created_at: datetime
     
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class ConversationWithMessages(Conversation):
     messages: List[Message] = [] 

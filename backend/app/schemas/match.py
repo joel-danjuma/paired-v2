@@ -11,11 +11,11 @@ class MatchRecommendation(BaseModel):
     compatibility_score: float
     
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class MutualMatch(BaseModel):
     user: UserPublicProfile
     listing_id: Optional[UUID] = None
 
     class Config:
-        orm_mode = True 
+        from_attributes = True 

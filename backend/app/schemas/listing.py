@@ -32,16 +32,14 @@ class ListingUpdate(ListingBase):
     status: Optional[ListingStatus] = None
 
 class Listing(ListingBase):
-    id: UUID
-    user_id: UUID
-    status: ListingStatus
+    id: int
+    owner_id: int
     created_at: datetime
-    updated_at: Optional[datetime]
-    view_count: int
-    contact_count: int
+    updated_at: datetime
+    owner: "User"
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class ListingWithUser(Listing):
     user: "UserPublicProfile"

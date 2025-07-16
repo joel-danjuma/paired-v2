@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, Field
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 from uuid import UUID
 from datetime import datetime
 from app.models.user import UserType
@@ -23,7 +23,7 @@ class UserProfile(UserBase):
     last_active: Optional[datetime]
     
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class UserUpdate(BaseModel):
     first_name: Optional[str] = Field(None, max_length=100)
@@ -46,7 +46,7 @@ class UserPublicProfile(BaseModel):
     profile_completion_score: int
     
     class Config:
-        orm_mode = True
+        from_attributes = True
 
     @classmethod
     def from_user(cls, user: "User"):
