@@ -65,7 +65,7 @@ if settings.environment == "production":
 app.include_router(api_router, prefix="/api/v1")
 
 # Mount static files
-app.mount("/assets", StaticFiles(directory=os.path.join(STATIC_DIR, "assets")), name="assets")
+app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static")
 
 @app.get("/{full_path:path}")
 async def serve_frontend(request: Request, full_path: str):
