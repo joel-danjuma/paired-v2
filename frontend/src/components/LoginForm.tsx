@@ -23,7 +23,7 @@ const LoginForm = () => {
     try {
       const success = await login(email, password);
       if (success) {
-        navigate('/roommates');
+        navigate('/dashboard');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to login');

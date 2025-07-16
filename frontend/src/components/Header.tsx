@@ -99,6 +99,9 @@ const Header = () => {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem asChild>
+                    <Link to="/dashboard" className="cursor-pointer">Dashboard</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
                     <Link to="/profile" className="cursor-pointer">View Profile</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
@@ -177,6 +180,13 @@ const Header = () => {
                     className="block py-2 text-base text-gray-600 hover:text-paired-600"
                   >
                     Create Listing
+                  </Link>
+                  <Link
+                    to="/dashboard"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="block py-2 text-base text-gray-600 hover:text-paired-600"
+                  >
+                    Dashboard
                   </Link>
                   <Link
                     to="/profile"

@@ -34,7 +34,7 @@ const RoommateFinder = () => {
   const { token } = useAuth();
 
   useEffect(() => {
-    const fetchRecommendations = async () => {
+    const fetchInitialData = async () => {
       if (!token) {
         setIsLoading(false);
         return;
@@ -42,18 +42,23 @@ const RoommateFinder = () => {
 
       setIsLoading(true);
       try {
-        const response = await fetch(`${API_BASE_URL}/matches/recommendations`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        // Fetch both recommendations and locations
+        const [recsResponse, locsResponse] = await Promise.all([
+          fetch(`${API_BASE_URL}/matches/recommendations`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          }),
+          fetch(`${API_BASE_URL}/listings/locations`, { // Assuming this endpoint exists
+            headers: { 'Authorization': `Bearer ${token}` }
+          })
+        ]);
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch recommendations');
-        }
+        if (!recsResponse.ok) throw new Error('Failed to fetch recommendations');
+        if (!locsResponse.ok) throw new Error('Failed to fetch locations');
 
-        const data = await response.json();
-        const formattedRoommates = data.map((rec: any) => ({
+        const recsData = await recsResponse.json();
+        const locsData = await locsResponse.json();
+
+        const formattedRoommates = recsData.map((rec: any) => ({
           id: rec.user.id,
           first_name: rec.user.first_name,
           last_name_initial: rec.user.last_name_initial,
@@ -61,20 +66,46 @@ const RoommateFinder = () => {
           profile_image_url: rec.user.profile_image_url,
           compatibility_score: rec.compatibility_score,
         }));
+
         setRoommates(formattedRoommates);
+        // setLocations(locsData.locations);
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Failed to load recommendations.");
+        toast.error(error instanceof Error ? error.message : "Failed to load initial data.");
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchRecommendations();
+    fetchInitialData();
   }, [token]);
 
-  // In a real app, this would call an API with the search parameters
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!token) return;
+
+    setIsLoading(true);
+    try {
+      const queryParams = new URLSearchParams({
+        query: searchQuery,
+        location: selectedLocation,
+      }).toString();
+
+      const response = await fetch(`${API_BASE_URL}/matches/search?${queryParams}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to perform search');
+      }
+
+      const data = await response.json();
+      setRoommates(data);
+      setActiveTab("discover"); // Switch to discover tab to show search results
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Search failed.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const locations: string[] = []; // Locations would now come from backend data or a separate endpoint

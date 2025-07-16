@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from typing import List
+from typing import List, Optional
 
 from app.models.database import get_db_session
 from app.models.user import User
 from app.models.match import Match, MatchStatus
-from app.schemas.match import MatchRecommendation, MatchAction
+from app.schemas.match import MatchRecommendation, MatchAction, Match
 from app.schemas.user import UserPublicProfile
 from app.core.deps import get_current_user
 from app.services import matching_service
@@ -53,6 +53,52 @@ async def get_match_recommendations(
     result = await db.execute(select(User).limit(100))
     potential_matches = result.scalars().all()
     
+    # Calculate compatibility scores
+    matches = matching_service.find_matches_for_user(current_user, potential_matches)
+    
+    # Convert to response model
+    recommendations = []
+    for match in matches[:limit]:
+        recommendations.append(
+            MatchRecommendation(
+                user=UserPublicProfile.from_user(match["user"]),
+                compatibility_score=match["compatibility_score"]
+            )
+        )
+        
+    return recommendations
+
+@router.get("/search", response_model=List[MatchRecommendation])
+async def search_matches(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db_session),
+    query: Optional[str] = None,
+    location: Optional[str] = None,
+    limit: int = 20
+):
+    """Search for matches with query and location filters."""
+    # In a real implementation, you would have a more sophisticated search
+    # that uses the query and location to filter users from the database.
+    # For now, we'll just get all users and filter them.
+    
+    result = await db.execute(select(User).limit(100)) # Simplified for now
+    potential_matches = result.scalars().all()
+    
+    # Filter by location if provided
+    if location and location != "all":
+        potential_matches = [
+            p for p in potential_matches 
+            if p.city and location.lower() in p.city.lower()
+        ]
+
+    # Filter by search query (name, bio, etc.)
+    if query:
+        potential_matches = [
+            p for p in potential_matches
+            if (p.first_name and query.lower() in p.first_name.lower()) or \
+               (p.bio and query.lower() in p.bio.lower())
+        ]
+        
     # Calculate compatibility scores
     matches = matching_service.find_matches_for_user(current_user, potential_matches)
     

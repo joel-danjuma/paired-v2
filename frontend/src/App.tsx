@@ -23,6 +23,7 @@ const OnboardingPage = lazy(() => import("./pages/OnboardingPage"));
 const RoommateFinder = lazy(() => import("./pages/RoommateFinder"));
 const RoommateDetailPage = lazy(() => import("./pages/RoommateDetailPage"));
 const MessagesPage = lazy(() => import("./pages/MessagesPage"));
+const DashboardPage = lazy(() => import("./pages/DashboardPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -52,6 +53,7 @@ const App = () => (
               <Route path="/roommates/:id" element={<RoommateDetailPage />} />
               <Route path="/messages" element={<MessagesPage />} />
               <Route path="/messages/:id" element={<MessagesPage />} />
+              <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>

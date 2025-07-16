@@ -73,6 +73,14 @@ async def search_listings(
     
     return listings
 
+@router.get("/locations", response_model=List[str])
+async def get_listing_locations(db: AsyncSession = Depends(get_db_session)):
+    """Get a list of unique listing locations"""
+    query = select(func.distinct(Listing.city)).where(Listing.city.isnot(None))
+    result = await db.execute(query)
+    locations = result.scalars().all()
+    return locations
+
 @router.get("/{listing_id}", response_model=ListingWithUser)
 async def get_listing(
     listing_id: UUID,
