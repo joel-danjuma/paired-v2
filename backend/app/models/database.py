@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, MetaData
+from sqlalchemy import create_engine, MetaData, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
@@ -20,8 +20,7 @@ if DATABASE_URL.startswith("postgresql://"):
 engine = create_async_engine(
     DATABASE_URL,
     echo=True,  # Set to False in production
-    poolclass=NullPool,
-    future=True
+    poolclass=NullPool
 )
 
 # Create async session maker
@@ -47,8 +46,8 @@ async def init_db():
     """Initialize database tables"""
     async with engine.begin() as conn:
         # Enable PostGIS and pgvector extensions
-        await conn.execute("CREATE EXTENSION IF NOT EXISTS postgis;")
-        await conn.execute("CREATE EXTENSION IF NOT EXISTS vector;")
+        await conn.execute(text("CREATE EXTENSION IF NOT EXISTS postgis;"))
+        await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
         
         # Create all tables
         await conn.run_sync(Base.metadata.create_all) 
