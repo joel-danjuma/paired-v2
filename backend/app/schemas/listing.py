@@ -1,9 +1,11 @@
 from pydantic import BaseModel, Field
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, TYPE_CHECKING
 from uuid import UUID
 from datetime import datetime
 from app.models.listing import ListingType, ListingStatus
-from contextlib import suppress
+
+if TYPE_CHECKING:
+    from app.schemas.user import User, UserPublicProfile
 
 class ListingBase(BaseModel):
     listing_type: ListingType
@@ -45,7 +47,5 @@ class Listing(ListingBase):
 class ListingWithUser(Listing):
     user: "UserPublicProfile"
 
-with suppress(NameError):
-    from app.schemas.user import User, UserPublicProfile
-    Listing.model_rebuild(force=True)
-    ListingWithUser.model_rebuild(force=True)
+Listing.model_rebuild()
+ListingWithUser.model_rebuild()

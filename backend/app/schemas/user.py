@@ -1,8 +1,11 @@
 from pydantic import BaseModel, EmailStr, Field
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, TYPE_CHECKING
 from uuid import UUID
 from datetime import datetime
 from app.models.user import UserType
+
+if TYPE_CHECKING:
+    from app.schemas.listing import Listing
 
 class UserBase(BaseModel):
     email: EmailStr
@@ -61,3 +64,23 @@ class UserPublicProfile(BaseModel):
             is_background_checked=user.is_background_checked,
             profile_completion_score=user.profile_completion_score
         ) 
+
+class User(UserBase):
+    id: int
+    is_active: bool = True
+    is_verified: bool = False
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class UserWithListings(User):
+    listings: List["Listing"] = []
+
+    class Config:
+        from_attributes = True
+
+User.model_rebuild()
+UserWithListings.model_rebuild() 
