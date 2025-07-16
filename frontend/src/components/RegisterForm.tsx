@@ -29,8 +29,10 @@ const RegisterForm = () => {
     setIsSubmitting(true);
 
     try {
-      await register(name, email, password);
-      navigate('/');
+      const success = await register(name, email, password);
+      if (success) {
+        navigate('/onboarding');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create account');
     } finally {

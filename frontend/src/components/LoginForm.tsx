@@ -21,8 +21,10 @@ const LoginForm = () => {
     setIsSubmitting(true);
 
     try {
-      await login(email, password);
-      navigate('/');
+      const success = await login(email, password);
+      if (success) {
+        navigate('/roommates');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to login');
     } finally {

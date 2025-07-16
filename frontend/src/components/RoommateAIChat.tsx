@@ -22,7 +22,7 @@ const RoommateAIChat = () => {
     },
   ]);
   const [isLoading, setIsLoading] = useState(false);
-  const [threadId, setThreadId] = useState<string | null>(null);
+  const [conversationId, setConversationId] = useState<string | null>(null);
   const { toast } = useToast();
   const { token } = useAuth();
 
@@ -39,14 +39,16 @@ const RoommateAIChat = () => {
     setIsLoading(true);
 
     try {
-      const endpoint = threadId ? `/agent/query/${threadId}` : '/agent/query';
-      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      const response = await fetch(`${API_BASE_URL}/agent/chat`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ query: message }),
+        body: JSON.stringify({ 
+          message: message,
+          conversation_id: conversationId 
+        }),
       });
 
       if (!response.ok) {
@@ -57,15 +59,16 @@ const RoommateAIChat = () => {
       
       const aiResponse: ChatMessageType = {
         id: `ai-${Date.now()}`,
-        content: data.response_text,
+        content: data.response,
         sender: "ai",
         timestamp: new Date(),
+        tool_outputs: data.tool_outputs,
       };
       
       setMessages((prev) => [...prev, aiResponse]);
 
-      if (!threadId && data.thread_id) {
-        setThreadId(data.thread_id);
+      if (!conversationId && data.conversation_id) {
+        setConversationId(data.conversation_id);
       }
       
       toast({

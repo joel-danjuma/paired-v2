@@ -9,14 +9,16 @@ type User = {
   user_type: string;
   first_name?: string;
   last_name?: string;
+  name?: string; // Added for new login logic
+  profilePic?: string; // Added for new login logic
 };
 
 type AuthContextType = {
   user: User | null;
   isLoading: boolean;
   token: string | null;
-  login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, fromRegistration?: boolean) => Promise<boolean>;
+  register: (name: string, email: string, password: string) => Promise<boolean>;
   logout: () => void;
 };
 
@@ -57,7 +59,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(false);
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, fromRegistration = false) => {
     setIsLoading(true);
     try {
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
@@ -77,13 +79,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const loggedInUser: User = {
         id: decoded.sub,
         email: email, // Email is not in token, but we have it
+        name: decoded.name, // Assuming name is in token
+        profilePic: decoded.picture, // Assuming picture is in token
         user_type: 'seeker' // Placeholder
       };
 
       setUser(loggedInUser);
       setToken(data.access_token);
       localStorage.setItem('pairedToken', data.access_token);
-      toast.success("Successfully logged in!");
+      if (!fromRegistration) {
+        toast.success("Successfully logged in!");
+      }
+      return true; // Indicate success
 
     } catch (error) {
       toast.error("Login failed: " + (error instanceof Error ? error.message : 'Unknown error'));
@@ -113,9 +120,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       // After successful registration, log the user in
-      await login(email, password);
-      
-      toast.success("Account created successfully!");
+      const loginSuccess = await login(email, password, true);
+      if (loginSuccess) {
+        toast.success("Account created successfully! Let's get you set up.");
+        return true; // Indicate success to navigate
+      } else {
+        throw new Error("Failed to log in after registration.");
+      }
     } catch (error) {
       toast.error("Registration failed: " + (error instanceof Error ? error.message : 'Unknown error'));
       throw error;

@@ -4,4 +4,5 @@ export type ChatMessage = {
   content: string;
   sender: "user" | "ai";
   timestamp: Date;
+  tool_outputs?: any[];
 };
