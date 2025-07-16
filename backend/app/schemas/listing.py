@@ -3,6 +3,7 @@ from typing import Optional, List, Dict
 from uuid import UUID
 from datetime import datetime
 from app.models.listing import ListingType, ListingStatus
+from contextlib import suppress
 
 class ListingBase(BaseModel):
     listing_type: ListingType
@@ -44,6 +45,7 @@ class Listing(ListingBase):
 class ListingWithUser(Listing):
     user: "UserPublicProfile"
 
-from app.schemas.user import User, UserPublicProfile 
-Listing.model_rebuild()
-ListingWithUser.model_rebuild()
+with suppress(NameError):
+    from app.schemas.user import User, UserPublicProfile
+    Listing.model_rebuild(force=True)
+    ListingWithUser.model_rebuild(force=True)
