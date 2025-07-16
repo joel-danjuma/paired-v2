@@ -4,14 +4,15 @@ import { Link } from "react-router-dom";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, User } from "lucide-react";
+import { MessageSquare, User, ThumbsUp, ThumbsDown } from "lucide-react";
 import { Roommate } from "@/pages/RoommateFinder"; // Import from page
 
 type RoommateCardProps = {
   roommate: Roommate;
+  onAction: (userId: string, action: 'like' | 'dislike') => void;
 };
 
-const RoommateCard = ({ roommate }: RoommateCardProps) => {
+const RoommateCard = ({ roommate, onAction }: RoommateCardProps) => {
   return (
     <Card className="overflow-hidden transition-shadow duration-300 hover:shadow-md">
       <div className="relative">
@@ -46,13 +47,16 @@ const RoommateCard = ({ roommate }: RoommateCardProps) => {
       </CardContent>
 
       <CardFooter className="p-4 pt-0 flex justify-between items-center">
-        <Button asChild variant="outline">
+        <div className="flex space-x-2">
+          <Button variant="outline" size="icon" onClick={() => onAction(roommate.id, 'dislike')}>
+            <ThumbsDown className="h-4 w-4" />
+          </Button>
+          <Button variant="outline" size="icon" onClick={() => onAction(roommate.id, 'like')}>
+            <ThumbsUp className="h-4 w-4" />
+          </Button>
+        </div>
+        <Button asChild>
           <Link to={`/roommates/${roommate.id}`}>View Profile</Link>
-        </Button>
-        <Button asChild variant="ghost" size="icon" className="text-paired-600 hover:text-paired-700 hover:bg-paired-50">
-          <Link to={`/messages/${roommate.id}`}>
-            <MessageSquare className="w-5 h-5" />
-          </Link>
         </Button>
       </CardFooter>
     </Card>

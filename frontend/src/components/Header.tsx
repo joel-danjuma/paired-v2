@@ -107,6 +107,9 @@ const Header = () => {
                   <DropdownMenuItem asChild>
                     <Link to="/my-listings" className="cursor-pointer">My Listings</Link>
                   </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/notifications" className="cursor-pointer">Notifications</Link>
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={logout} className="text-red-600 cursor-pointer">
                     <LogOut className="w-4 h-4 mr-2" /> Log Out
@@ -201,6 +204,13 @@ const Header = () => {
                     className="block py-2 text-base text-gray-600 hover:text-paired-600"
                   >
                     My Listings
+                  </Link>
+                  <Link
+                    to="/notifications"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="block py-2 text-base text-gray-600 hover:text-paired-600"
+                  >
+                    Notifications
                   </Link>
                 </>
               )}

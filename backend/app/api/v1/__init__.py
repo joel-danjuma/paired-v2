@@ -7,6 +7,7 @@ from .conversations import router as conversations_router
 from .agent import router as agent_router
 from .ml import router as ml_router
 from .verification import router as verification_router
+from .notifications import router as notifications_router
 
 api_router = APIRouter()
 
@@ -18,4 +19,5 @@ api_router.include_router(matches_router, prefix="/matches", tags=["Matches"])
 api_router.include_router(conversations_router, prefix="/conversations", tags=["Conversations"])
 api_router.include_router(agent_router, prefix="/agent", tags=["AI Agent"])
 api_router.include_router(ml_router, prefix="/ml", tags=["Machine Learning"])
-api_router.include_router(verification_router, prefix="/verification", tags=["Verification"]) 
+api_router.include_router(verification_router, prefix="/verification", tags=["Verification"])
+api_router.include_router(notifications_router, prefix="/notifications", tags=["Notifications"]) 

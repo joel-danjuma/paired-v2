@@ -10,6 +10,7 @@ type RoommateTabsContentProps = {
   filteredRoommates: Roommate[];
   onTabChange: (tab: string) => void;
   isLoading: boolean;
+  onAction: (userId: string, action: 'like' | 'dislike') => void;
 };
 
 const RoommateTabsContent = ({
@@ -17,6 +18,7 @@ const RoommateTabsContent = ({
   filteredRoommates,
   onTabChange,
   isLoading,
+  onAction,
 }: RoommateTabsContentProps) => {
   const renderSkeletons = () => (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -43,7 +45,11 @@ const RoommateTabsContent = ({
         {isLoading ? renderSkeletons() : filteredRoommates.length > 0 ? (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {filteredRoommates.map((roommate) => (
-              <RoommateCard key={roommate.id} roommate={roommate} />
+              <RoommateCard 
+                key={roommate.id} 
+                roommate={roommate} 
+                onAction={onAction}
+              />
             ))}
           </div>
         ) : (

@@ -108,6 +108,23 @@ const RoommateFinder = () => {
     }
   };
 
+  const handleAction = async (userId: string, action: 'like' | 'dislike') => {
+    if (!token) return;
+    try {
+      await fetch(`${API_BASE_URL}/matches/${userId}/action`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ action }),
+      });
+      toast.success(`User ${action}d!`);
+    } catch (error) {
+      toast.error(`Failed to ${action} user.`);
+    }
+  };
+
   const locations: string[] = []; // Locations would now come from backend data or a separate endpoint
 
   return (
@@ -171,6 +188,7 @@ const RoommateFinder = () => {
                 isLoading={isLoading}
                 filteredRoommates={roommates}
                 onTabChange={setActiveTab}
+                onAction={handleAction}
               />
             </div>
           </div>
