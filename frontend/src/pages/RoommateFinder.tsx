@@ -42,21 +42,21 @@ const RoommateFinder = () => {
 
       setIsLoading(true);
       try {
-        // Fetch both recommendations and locations
-        const [recsResponse, locsResponse] = await Promise.all([
+        // Fetch both recommendations and random listings
+        const [recsResponse, listingsResponse] = await Promise.all([
           fetch(`${API_BASE_URL}/matches/recommendations`, {
             headers: { 'Authorization': `Bearer ${token}` }
           }),
-          fetch(`${API_BASE_URL}/listings/locations`, { // Assuming this endpoint exists
+          fetch(`${API_BASE_URL}/listings/random`, {
             headers: { 'Authorization': `Bearer ${token}` }
           })
         ]);
 
         if (!recsResponse.ok) throw new Error('Failed to fetch recommendations');
-        if (!locsResponse.ok) throw new Error('Failed to fetch locations');
+        if (!listingsResponse.ok) throw new Error('Failed to fetch listings');
 
         const recsData = await recsResponse.json();
-        const locsData = await locsResponse.json();
+        const listingsData = await listingsResponse.json();
 
         const formattedRoommates = recsData.map((rec: any) => ({
           id: rec.user.id,
@@ -67,8 +67,7 @@ const RoommateFinder = () => {
           compatibility_score: rec.compatibility_score,
         }));
 
-        setRoommates(formattedRoommates);
-        // setLocations(locsData.locations);
+        setRoommates([...formattedRoommates, ...listingsData]);
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "Failed to load initial data.");
       } finally {

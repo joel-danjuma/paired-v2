@@ -22,12 +22,10 @@ const RoommateAIChat = () => {
     },
   ]);
   const [isLoading, setIsLoading] = useState(false);
-  const [conversationId, setConversationId] = useState<string | null>(null);
   const { toast } = useToast();
   const { token } = useAuth();
 
   const handleSendMessage = async (message: string) => {
-    // Add user message
     const userMessage: ChatMessageType = {
       id: `user-${Date.now()}`,
       content: message,
@@ -35,20 +33,25 @@ const RoommateAIChat = () => {
       timestamp: new Date(),
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    const newMessages = [...messages, userMessage];
+    setMessages(newMessages);
     setIsLoading(true);
 
     try {
+      const payload = {
+        messages: newMessages.map(msg => ({
+          content: msg.content,
+          sender: msg.sender,
+        })),
+      };
+
       const response = await fetch(`${API_BASE_URL}/agent/chat`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ 
-          message: message,
-          conversation_id: conversationId 
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
@@ -59,17 +62,13 @@ const RoommateAIChat = () => {
       
       const aiResponse: ChatMessageType = {
         id: `ai-${Date.now()}`,
-        content: data.response,
+        content: data.response.content,
         sender: "ai",
         timestamp: new Date(),
-        tool_outputs: data.tool_outputs,
+        tool_outputs: data.response.tool_outputs,
       };
       
       setMessages((prev) => [...prev, aiResponse]);
-
-      if (!conversationId && data.conversation_id) {
-        setConversationId(data.conversation_id);
-      }
       
       toast({
         title: "AI Response Received",

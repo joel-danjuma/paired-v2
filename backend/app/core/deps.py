@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.models.database import get_db_session
-from app.models.user import User
+from app.models.user import User, UserType
 from app.core.security import verify_token
 
 # Security scheme
@@ -45,6 +45,17 @@ async def get_current_user(
         )
     
     return user
+
+async def get_current_admin_user(
+    current_user: User = Depends(get_current_user)
+) -> User:
+    """Get current user and check if they are an admin."""
+    if current_user.user_type != UserType.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="The user does not have sufficient privileges."
+        )
+    return current_user
 
 async def get_current_active_user(
     current_user: User = Depends(get_current_user)

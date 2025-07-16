@@ -18,7 +18,7 @@ const MessagesPage = () => {
       
       <main className="flex-1 flex flex-col">
         {user ? (
-          <div className="flex-1">
+          <div className="flex-1 flex flex-col">
             <ChatWindow />
           </div>
         ) : (

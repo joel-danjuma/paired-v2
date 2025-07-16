@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional, List
+from typing import List, Optional
 
 class RoommatePreferences(BaseModel):
     """Extracted roommate preferences from a user's query."""
@@ -24,3 +24,11 @@ class AgentResponse(BaseModel):
     preferences: RoommatePreferences
     original_query: str
     response_text: str 
+
+class AgentMessage(BaseModel):
+    sender: str
+    content: str
+
+class AgentChatRequest(BaseModel):
+    messages: List[AgentMessage]
+    conversation_id: Optional[str] = None 

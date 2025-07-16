@@ -58,6 +58,10 @@ class Settings(BaseSettings):
     # Trusted Hosts for Host Header validation
     trusted_hosts: List[str] = ["localhost", "127.0.0.1", "*.onrender.com", "*.paired.com", "paired.com"]
     
+    # Admin User
+    admin_email: Optional[str] = None
+    admin_password: Optional[str] = None
+
     # Third-party services
     checkr_api_key: Optional[str] = None
     stripe_secret_key: Optional[str] = None

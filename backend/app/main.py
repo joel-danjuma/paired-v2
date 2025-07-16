@@ -10,6 +10,11 @@ from app.core.config import settings
 from app.models import init_db
 from app.api.v1 import api_router
 from app.middleware.performance import PerformanceMiddleware
+from app.models.user import User, UserType
+from app.core.security import get_password_hash
+from app.models.database import get_db_session
+from sqlalchemy.future import select
+
 
 # Adjust DATABASE_URL for async driver
 if settings.database_url and settings.database_url.startswith("postgresql://"):
@@ -22,11 +27,38 @@ if settings.environment == "production":
 else:
     STATIC_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "dist"))
 
+async def create_admin_user():
+    """Creates a default admin user if one doesn't exist."""
+    async for db in get_db_session():
+        admin_email = settings.admin_email
+        admin_password = settings.admin_password
+
+        if not admin_email or not admin_password:
+            print("Admin email or password not set, skipping admin user creation.")
+            return
+
+        result = await db.execute(select(User).filter(User.email == admin_email))
+        if result.scalar_one_or_none() is None:
+            hashed_password = get_password_hash(admin_password)
+            admin_user = User(
+                email=admin_email,
+                password_hash=hashed_password,
+                user_type=UserType.ADMIN,
+                is_active=True,
+                is_verified_email=True,
+                first_name="Admin",
+                last_name="User",
+            )
+            db.add(admin_user)
+            await db.commit()
+            print(f"Admin user {admin_email} created.")
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
     print("Starting up Paired Backend API...")
     await init_db()
+    await create_admin_user()
     print("Database initialized successfully")
     yield
     # Shutdown

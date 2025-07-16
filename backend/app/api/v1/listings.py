@@ -14,6 +14,21 @@ from app.core.deps import get_current_user
 
 router = APIRouter()
 
+@router.get("/random", response_model=List[ListingSchema])
+async def get_random_listings(
+    limit: int = 10,
+    db: AsyncSession = Depends(get_db_session)
+):
+    """Get a list of random listings."""
+    result = await db.execute(
+        select(Listing)
+        .where(Listing.status == ListingStatus.ACTIVE)
+        .order_by(func.random())
+        .limit(limit)
+    )
+    listings = result.scalars().all()
+    return listings
+
 @router.post("/", response_model=ListingSchema, status_code=status.HTTP_201_CREATED)
 async def create_listing(
     listing_data: ListingCreate,

@@ -174,7 +174,7 @@ const ChatWindow = () => {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-0 h-[calc(100vh-16rem)]">
+    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-0 h-full">
       {/* Contacts Sidebar */}
       <div className="hidden md:block md:col-span-1 lg:col-span-1 bg-white border-r">
         <div className="p-4 border-b">

@@ -43,52 +43,55 @@ class AIAgentService:
             tools=tools,
         )
 
-    async def chat(self, conversation_history: List[Message]) -> str:
+    async def chat(self, user_id: str, messages: List[dict], conversation_id: str = None) -> dict:
         """
         Handles a chat interaction with the AI agent, including tool calls.
 
         Args:
-            conversation_history: A list of messages in the conversation.
+            user_id: The ID of the user starting the chat.
+            messages: A list of messages in the conversation.
+            conversation_id: The optional ID of the existing conversation.
 
         Returns:
-            The agent's response as a string.
+            A dictionary containing the agent's response and any tool outputs.
         """
-        # Start a chat session with the model
-        chat_session = self.model.start_chat(
-            history=[{"role": "user", "parts": [msg.content]} for msg in conversation_history[:-1]]
-        )
+        # For now, we'll just use the content of the messages.
+        # In a real implementation, you might want to map sender/role.
+        history = [{"role": msg.sender, "parts": [msg.content]} for msg in messages[:-1]]
+        latest_message = messages[-1].content
         
-        # Get the latest message from the user
-        latest_message = conversation_history[-1].content
+        # Start a chat session with the model
+        chat_session = self.model.start_chat(history=history)
         
         # Send the message to the model
-        response = chat_session.send_message(latest_message)
+        response = await chat_session.send_message_async(latest_message)
         
-        # Check if the model wants to call a tool
-        if response.function_calls:
-            # For now, we'll just handle the first tool call
-            function_call = response.function_calls[0]
-            
-            # Find the corresponding tool function
-            tool_function = next((t for t in self.tools if t.__name__ == function_call.name), None)
+        response_data = {"content": "", "tool_outputs": []}
+
+        # Check for function calls
+        if response.candidates[0].content.parts[0].function_call:
+            function_call = response.candidates[0].content.parts[0].function_call
+            tool_function = self.tools_map.get(function_call.name)
             
             if tool_function:
-                # Call the tool with the arguments provided by the model
                 tool_response = tool_function(**function_call.args)
                 
-                # Send the tool's response back to the model
-                response = chat_session.send_message(
-                    {"function_response": {"name": function_call.name, "response": tool_response}}
+                # Send tool response back to the model
+                response = await chat_session.send_message_async(
+                    [{"function_response": {"name": function_call.name, "response": tool_response}}]
                 )
+                response_data["tool_outputs"].append(tool_response)
 
-        return response.text
+        response_data["content"] = response.text
+        return response_data
 
 # --- Instantiate the Service --- #
 
 # A dictionary to map tool names to their functions
-tools = {
+tools_map = {
     "search_for_listings": search_for_listings,
 }
 
 # Instantiate the service with the defined tools
-ai_agent_service = AIAgentService(tools=list(tools.values()))
+ai_agent_service = AIAgentService(tools=list(tools_map.values()))
+ai_agent_service.tools_map = tools_map

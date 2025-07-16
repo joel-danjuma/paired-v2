@@ -10,6 +10,7 @@ class UserType(str, enum.Enum):
     SEEKER = "seeker"
     PROVIDER = "provider"
     AGENT = "agent"
+    ADMIN = "admin"
 
 class VerificationStatus(str, enum.Enum):
     PENDING = "pending"
