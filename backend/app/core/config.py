@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     jwt_expiration_hours: int = 24
     
     # Google Gemini API
-    google_api_key: Optional[str] = None
+    google_api_key: str
     google_project_id: Optional[str] = None
     
     # OpenAI API
