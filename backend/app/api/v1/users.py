@@ -5,7 +5,7 @@ from uuid import UUID
 
 from app.models.database import get_db_session
 from app.models.user import User
-from app.schemas.user import UserProfile, UserUpdate, UserPublicProfile
+from app.schemas.user import UserProfile, UserUpdate, UserPublicProfile, OnboardingData
 from app.schemas.verification import (
     IdentityDocumentUpload, 
     VerificationResult, 
@@ -49,6 +49,49 @@ async def update_current_user_profile(
     if current_user.lifestyle_data: score += 15
     current_user.profile_completion_score = score
     
+    db.add(current_user)
+    await db.commit()
+    await db.refresh(current_user)
+    
+    return current_user
+
+@router.put("/me/profile", response_model=UserProfile)
+async def update_onboarding_data(
+    onboarding_data: OnboardingData,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db_session)
+):
+    """Update user profile with onboarding data."""
+    update_data = onboarding_data.dict(exclude_unset=True)
+    
+    # Separate lifestyle and preferences from the rest of the data
+    lifestyle_data = current_user.lifestyle_data or {}
+    preferences_data = current_user.preferences or {}
+    
+    for key, value in update_data.items():
+        if key in ['is_smoker', 'has_pets', 'drinking_habits', 'sleep_schedule', 'cleanliness', 'guest_preference', 'noise_level']:
+            lifestyle_data[key] = value
+        elif key in ['interests', 'hobbies', 'music_preference', 'food_preference']:
+            preferences_data[key] = value
+        else:
+            setattr(current_user, key, value)
+            
+    current_user.lifestyle_data = lifestyle_data
+    current_user.preferences = preferences_data
+    
+    # Recalculate profile completion score
+    score = 0
+    if current_user.first_name: score += 5
+    if current_user.last_name: score += 5
+    if current_user.date_of_birth or getattr(current_user, 'age', None): score += 10
+    if current_user.bio: score += 15
+    if current_user.profile_image_url: score += 15
+    if current_user.preferences and len(current_user.preferences) > 2: score += 20
+    if current_user.lifestyle_data and len(current_user.lifestyle_data) > 3: score += 20
+    if current_user.is_verified_email: score += 5
+    if current_user.is_verified_phone: score += 5
+    current_user.profile_completion_score = min(score, 100)
+
     db.add(current_user)
     await db.commit()
     await db.refresh(current_user)

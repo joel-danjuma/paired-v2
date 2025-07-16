@@ -19,8 +19,9 @@ import { Switch } from '@/components/ui/switch';
 
 const OnboardingPage = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     // Basic info
     bio: '',
@@ -63,12 +64,32 @@ const OnboardingPage = () => {
     setCurrentStep(prev => prev - 1);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Here you'd typically send this data to your backend
-    console.log('Submitting user preferences:', formData);
-    toast.success("Profile preferences saved!");
-    navigate('/profile');
+    setIsSubmitting(true);
+    
+    try {
+      const response = await fetch('/api/v1/users/me/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(formData)
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to update profile');
+      }
+
+      toast.success("Profile preferences saved!");
+      navigate('/profile');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to save preferences');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -340,8 +361,8 @@ const OnboardingPage = () => {
                 Next
               </Button>
             ) : (
-              <Button type="submit">
-                Complete Profile
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? 'Saving...' : 'Complete Profile'}
               </Button>
             )}
           </CardFooter>

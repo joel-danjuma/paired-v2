@@ -37,6 +37,23 @@ class UserUpdate(BaseModel):
     lifestyle_data: Optional[Dict] = None
     phone: Optional[str] = Field(None, max_length=20)
 
+class OnboardingData(BaseModel):
+    bio: Optional[str] = None
+    occupation: Optional[str] = None
+    age: Optional[int] = None
+    gender: Optional[str] = None
+    is_smoker: Optional[bool] = None
+    has_pets: Optional[bool] = None
+    drinking_habits: Optional[str] = None
+    sleep_schedule: Optional[str] = None
+    cleanliness: Optional[str] = None
+    guest_preference: Optional[str] = None
+    noise_level: Optional[str] = None
+    interests: Optional[str] = None
+    hobbies: Optional[str] = None
+    music_preference: Optional[str] = None
+    food_preference: Optional[str] = None
+
 class UserPublicProfile(BaseModel):
     id: UUID
     first_name: Optional[str]
