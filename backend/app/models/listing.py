@@ -68,6 +68,7 @@ class Listing(Base):
     
     # Relationships
     user = relationship("User", back_populates="listings")
+    embeddings = relationship("ListingEmbedding", back_populates="listing")
     
     def __repr__(self):
         return f"<Listing(id={self.id}, title={self.title}, type={self.listing_type})>"
