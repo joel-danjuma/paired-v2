@@ -1,9 +1,10 @@
 from .database import Base, get_db_session, init_db
 from .user import User, UserType, VerificationStatus
-from .listing import Listing, ListingType, ListingStatus
+from .listing import Listing, ListingStatus, PropertyType, ListingAmenity
 from .match import Match, MatchStatus
 from .conversation import Conversation, Message
-from .embedding import UserEmbedding, EmbeddingType
+from .embedding import UserEmbedding, ListingEmbedding
+from .notification import Notification, NotificationType
 
 __all__ = [
     "Base",
@@ -13,12 +14,15 @@ __all__ = [
     "UserType", 
     "VerificationStatus",
     "Listing",
-    "ListingType",
     "ListingStatus",
+    "PropertyType",
+    "ListingAmenity",
     "Match",
     "MatchStatus",
     "Conversation",
     "Message",
     "UserEmbedding",
-    "EmbeddingType"
+    "ListingEmbedding",
+    "Notification",
+    "NotificationType",
 ] 
