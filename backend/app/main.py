@@ -17,7 +17,10 @@ if settings.database_url and settings.database_url.startswith("postgresql://"):
 
 # Define the path for static files relative to the project root
 # This makes it work consistently whether run locally or in production
-STATIC_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "dist"))
+if settings.environment == "production":
+    STATIC_DIR = "/app/static"
+else:
+    STATIC_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "dist"))
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
