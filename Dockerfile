@@ -15,11 +15,6 @@ COPY frontend/ ./
 # Build the frontend
 RUN npm run build
 
-# ---- START DEBUGGING ----
-# See what's in the dist folder
-RUN ls -la /app/frontend/dist
-# ---- END DEBUGGING ----
-
 # Stage 2: Build the backend with the frontend assets
 FROM python:3.10-slim
 
@@ -46,11 +41,6 @@ COPY ./backend /app
 
 # Copy the built frontend from the builder stage
 COPY --from=frontend-builder /app/frontend/dist /app/static
-
-# ---- START DEBUGGING ----
-# See what's in the final /app folder
-RUN ls -la /app
-# ---- END DEBUGGING ----
 
 # Expose the port the app runs on
 EXPOSE 8000
