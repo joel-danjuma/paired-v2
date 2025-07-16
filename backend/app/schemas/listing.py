@@ -44,5 +44,6 @@ class Listing(ListingBase):
 class ListingWithUser(Listing):
     user: "UserPublicProfile"
 
-from app.schemas.user import UserPublicProfile
-ListingWithUser.update_forward_refs() 
+from app.schemas.user import User, UserPublicProfile 
+Listing.model_rebuild()
+ListingWithUser.model_rebuild()
