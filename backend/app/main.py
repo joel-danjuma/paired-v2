@@ -63,34 +63,6 @@ app.add_middleware(
 # Include API routes
 app.include_router(api_router, prefix="/api/v1")
 
-# Mount static files
-app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static")
-
-@app.get("/{full_path:path}")
-async def serve_frontend(request: Request, full_path: str):
-    """Serve frontend application."""
-    # Check if the requested path is for an API endpoint
-    if full_path.startswith("api/"):
-        # This will be handled by the API router
-        return Response(status_code=404)
-        
-    # Check if a file exists at the requested path in the static directory
-    file_path = os.path.join(STATIC_DIR, full_path)
-    if os.path.isfile(file_path):
-        return FileResponse(file_path)
-        
-    # For any other path, serve the index.html file for client-side routing
-    index_path = os.path.join(STATIC_DIR, "index.html")
-    if os.path.exists(index_path):
-        return FileResponse(index_path)
-    
-    # If index.html is not found, return a 404
-    return Response(status_code=404, content="Frontend not found")
-
-@app.get("/")
-async def root():
-    """Serve the root of the frontend application."""
-    index_path = os.path.join(STATIC_DIR, "index.html")
-    if os.path.exists(index_path):
-        return FileResponse(index_path)
-    return {"message": "Welcome to Paired Backend API - Frontend not found"} 
+# Mount static files for the frontend
+# This will serve index.html for any path that is not an API call or a file
+app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static") 
