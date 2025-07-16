@@ -80,7 +80,4 @@ class UserWithListings(User):
     listings: List["Listing"] = []
 
     class Config:
-        from_attributes = True
-
-User.model_rebuild()
-UserWithListings.model_rebuild() 
+        from_attributes = True 

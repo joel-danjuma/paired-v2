@@ -46,6 +46,3 @@ class Listing(ListingBase):
 
 class ListingWithUser(Listing):
     user: "UserPublicProfile"
-
-Listing.model_rebuild()
-ListingWithUser.model_rebuild()

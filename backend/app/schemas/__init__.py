@@ -1,10 +1,14 @@
-from .auth import UserRegister, UserLogin, Token, RefreshToken
-from .user import UserProfile, UserUpdate, UserPublicProfile
+from .auth import Token, RefreshToken, UserRegister, UserLogin
+from .user import UserProfile, UserUpdate, UserPublicProfile, User, UserWithListings
 from .listing import ListingCreate, ListingUpdate, Listing, ListingWithUser
 from .match import MatchAction, MatchRecommendation, MutualMatch
-from .agent import AgentQuery, AgentResponse, RoommatePreferences
-from .conversation import ConversationCreate, Conversation, ConversationWithMessages, MessageCreate, Message
-from .verification import IdentityDocumentUpload, VerificationResult, EmailVerificationRequest, EmailVerificationConfirm, VerificationStatus
+from .conversation import Conversation, Message, MessageCreate, ConversationCreate
+
+# Resolve forward references
+User.model_rebuild()
+UserWithListings.model_rebuild()
+Listing.model_rebuild()
+ListingWithUser.model_rebuild()
 
 __all__ = [
     "UserRegister",
