@@ -121,4 +121,23 @@ class NotificationService:
         
         await self.mail.send_message(message)
 
-notification_service = NotificationService() 
+class MockNotificationService:
+    """A mock notification service that does nothing."""
+    async def send_welcome_email(self, email: str, first_name: str):
+        print("MockNotificationService: Would send welcome email.")
+    
+    async def send_password_reset_email(self, email: str, reset_token: str):
+        print("MockNotificationService: Would send password reset email.")
+
+    async def send_match_notification_email(self, email: str, first_name: str, match_count: int):
+        print("MockNotificationService: Would send match notification email.")
+        
+    async def send_verification_email(self, email: str, verification_token: str):
+        print("MockNotificationService: Would send verification email.")
+
+
+if settings.smtp_user and settings.smtp_password:
+    notification_service = NotificationService()
+else:
+    print("Warning: Email credentials not configured. Using mock notification service.")
+    notification_service = MockNotificationService() 
