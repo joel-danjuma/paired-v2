@@ -52,6 +52,7 @@ class Settings(BaseSettings):
     cors_origins: List[str] = [
         "http://localhost:3000", 
         "http://localhost:5173",
+        "http://localhost:8080",  # Add port 8080 for frontend
         "https://paired-v2.onrender.com"
     ]
     

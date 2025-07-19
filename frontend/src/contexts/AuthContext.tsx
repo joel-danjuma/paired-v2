@@ -110,7 +110,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           first_name: name.split(' ')[0],
           last_name: name.split(' ')[1] || '',
           email,
-          password
+          password,
+          user_type: 'SEEKER' // Add the required user_type field
         }),
       });
 
