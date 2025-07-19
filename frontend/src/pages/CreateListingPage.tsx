@@ -27,7 +27,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Info, Upload, Plus, Check, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import IdentityVerification from '@/components/IdentityVerification';
 
 type ListingFormValues = {
   title: string;
@@ -57,9 +56,6 @@ const CreateListingPage = () => {
   const [step, setStep] = useState(1);
   const [isPremiumSelected, setIsPremiumSelected] = useState(false);
   const [imagePreview, setImagePreview] = useState<string[]>([]);
-  
-  // Mock verification status - in real app, this would come from user context or API
-  const [verificationStatus, setVerificationStatus] = useState<'unverified' | 'pending' | 'verified' | 'rejected'>('unverified');
 
   const form = useForm<ListingFormValues>({
     defaultValues: {
@@ -84,7 +80,7 @@ const CreateListingPage = () => {
     },
   });
 
-  // Check if user needs verification
+  // Check if user is logged in
   if (!user) {
     return (
       <div className="container max-w-xl py-16 mx-auto px-4">
@@ -99,33 +95,6 @@ const CreateListingPage = () => {
             </Button>
           </div>
         </div>
-      </div>
-    );
-  }
-
-  if (verificationStatus !== 'verified') {
-    return (
-      <div className="container max-w-2xl py-8 mx-auto px-4">
-        <div className="mb-8">
-          <Button
-            variant="outline"
-            onClick={() => navigate(-1)}
-            className="mb-4"
-          >
-            <X className="w-4 h-4 mr-2" />
-            Cancel
-          </Button>
-          <h1 className="text-3xl font-bold mb-2">Create Your Listing</h1>
-          <p className="text-gray-600">Complete identity verification to start creating listings</p>
-        </div>
-        
-        <IdentityVerification 
-          currentStatus={verificationStatus}
-          onVerificationSubmit={(data) => {
-            console.log('Verification data:', data);
-            setVerificationStatus('pending');
-          }}
-        />
       </div>
     );
   }
