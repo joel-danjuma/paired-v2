@@ -1,0 +1,34 @@
+services:
+  # Web service for the Paired application
+  - type: web
+    name: paired-app
+    env: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: paired-postgres
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: paired-redis
+          property: connectionString
+      # Add other environment variables from your .env file here
+      # For example:
+      # - key: GOOGLE_API_KEY
+      #   value: your_google_api_key
+
+  # Redis instance for caching
+  - type: redis
+    name: paired-redis
+    ipAllowList: [] # Allow all
+    maxmemoryPolicy: allkeys-lru
+
+databases:
+  # PostgreSQL database
+  - name: paired-postgres
+    ipAllowList: [] # Allow all
+    postgresMajorVersion: 15 
