@@ -14,7 +14,8 @@ from app.schemas.conversation import (
     Conversation as ConversationSchema,
     ConversationWithMessages,
     MessageCreate,
-    Message as MessageSchema
+    Message as MessageSchema,
+    ContactInfo
 )
 from app.core.deps import get_current_user
 
@@ -63,19 +64,113 @@ async def create_conversation(
     await db.refresh(new_conversation)
     return new_conversation
 
-@router.get("/", response_model=List[ConversationSchema])
+@router.post("/start/{user_id}", response_model=ConversationSchema, status_code=status.HTTP_201_CREATED)
+async def start_conversation_with_user(
+    user_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db_session)
+):
+    """Start a conversation with a specific user"""
+    if user_id == current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot start conversation with yourself"
+        )
+    
+    # Check if user exists
+    result = await db.execute(select(User).where(User.id == user_id))
+    target_user = result.scalar_one_or_none()
+    
+    if not target_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    # Check if conversation already exists
+    result = await db.execute(
+        select(Conversation)
+        .where(Conversation.participants.contains([current_user.id, user_id]))
+        .where(Conversation.is_active == True)
+    )
+    existing_conversation = result.scalar_one_or_none()
+    
+    if existing_conversation:
+        return existing_conversation
+    
+    # Create new conversation
+    new_conversation = Conversation(
+        thread_id=str(uuid4()),
+        participants=[current_user.id, user_id]
+    )
+    
+    db.add(new_conversation)
+    await db.commit()
+    await db.refresh(new_conversation)
+    return new_conversation
+
+@router.get("/", response_model=List[ContactInfo])
 async def get_user_conversations(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db_session)
 ):
-    """Get all conversations for the current user"""
+    """Get all conversations for the current user formatted as contacts"""
     result = await db.execute(
         select(Conversation)
         .where(Conversation.participants.contains([current_user.id]))
         .where(Conversation.is_active == True)
+        .order_by(Conversation.last_message_at.desc().nullslast())
     )
     conversations = result.scalars().all()
-    return conversations
+    
+    contacts = []
+    for conversation in conversations:
+        # Get the other participant (not the current user)
+        other_participant_ids = [pid for pid in conversation.participants if pid != current_user.id]
+        if not other_participant_ids:
+            continue
+            
+        other_participant_id = other_participant_ids[0]
+        
+        # Get other participant's info
+        user_result = await db.execute(
+            select(User).where(User.id == other_participant_id)
+        )
+        other_user = user_result.scalar_one_or_none()
+        
+        if not other_user:
+            continue
+            
+        # Get last message
+        last_message_result = await db.execute(
+            select(Message)
+            .where(Message.conversation_id == conversation.id)
+            .order_by(Message.created_at.desc())
+            .limit(1)
+        )
+        last_message = last_message_result.scalar_one_or_none()
+        
+        # Count unread messages (messages not from current user that are unread)
+        unread_result = await db.execute(
+            select(Message)
+            .where(Message.conversation_id == conversation.id)
+            .where(Message.sender_id != current_user.id)
+            .where(Message.is_read == False)
+        )
+        unread_count = len(unread_result.scalars().all())
+        
+        # Create contact info
+        contact = ContactInfo(
+            id=str(conversation.id),
+            name=f"{other_user.first_name or ''} {other_user.last_name or ''}".strip() or "Unknown User",
+            avatar=other_user.profile_image_url,
+            lastMessage=last_message.content if last_message else None,
+            lastMessageTime=last_message.created_at if last_message else None,
+            unread=unread_count
+        )
+        contacts.append(contact)
+    
+    return contacts
 
 @router.get("/{conversation_id}", response_model=ConversationWithMessages)
 async def get_conversation_with_messages(

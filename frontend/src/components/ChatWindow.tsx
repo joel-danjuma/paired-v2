@@ -10,21 +10,25 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Send, ArrowLeft, MessageSquare, User } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1";
+
 interface Contact {
   id: string;
   name: string;
   avatar?: string;
   lastMessage?: string;
-  lastMessageTime?: Date;
+  lastMessageTime?: string; // Date string from backend
   unread?: number;
 };
 
 interface Message {
   id: string;
-  senderId: string;
+  conversation_id: string;
+  sender_id: string;
   content: string;
-  timestamp: Date;
-  read: boolean;
+  message_type: string;
+  is_read: boolean;
+  created_at: string; // Date string from backend
 };
 
 const ChatWindow = () => {
@@ -45,7 +49,7 @@ const ChatWindow = () => {
       }
 
       try {
-        const response = await fetch('/api/v1/conversations', {
+        const response = await fetch(`${API_BASE_URL}/conversations`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -82,7 +86,7 @@ const ChatWindow = () => {
       }
 
       try {
-        const response = await fetch(`/api/v1/conversations/${activeContact.id}/messages`, {
+        const response = await fetch(`${API_BASE_URL}/conversations/${activeContact.id}/messages`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -106,7 +110,7 @@ const ChatWindow = () => {
     if (!newMessage.trim() || !activeContact || !token) return;
     
     try {
-      const response = await fetch(`/api/v1/conversations/${activeContact.id}/messages`, {
+      const response = await fetch(`${API_BASE_URL}/conversations/${activeContact.id}/messages`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -188,7 +192,7 @@ const ChatWindow = () => {
                     <p className="font-medium truncate">{contact.name}</p>
                     {contact.lastMessageTime && (
                       <span className="text-xs text-gray-500">
-                        {formatTime(contact.lastMessageTime)}
+                        {formatTime(new Date(contact.lastMessageTime))}
                       </span>
                     )}
                   </div>
@@ -247,22 +251,22 @@ const ChatWindow = () => {
                 {messages.map(message => (
                   <div 
                     key={message.id} 
-                    className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}
+                    className={`flex ${message.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}
                   >
                     <div 
-                      className={`max-w-[70%] p-3 rounded-lg ${
-                        message.senderId === user?.id
-                          ? 'bg-paired-400 text-white' 
-                          : 'bg-gray-100 text-gray-800'
-                      }`}
+                                              className={`max-w-[70%] p-3 rounded-lg ${
+                          message.sender_id === user?.id
+                            ? 'bg-paired-400 text-white' 
+                            : 'bg-gray-100 text-gray-800'
+                        }`}
                     >
                       <p className="whitespace-pre-wrap break-words">{message.content}</p>
                       <div 
                         className={`text-xs mt-1 ${
-                          message.senderId === user?.id ? 'text-paired-100' : 'text-gray-500'
+                          message.sender_id === user?.id ? 'text-paired-100' : 'text-gray-500'
                         }`}
                       >
-                        {formatTime(message.timestamp)}
+                        {formatTime(new Date(message.created_at))}
                       </div>
                     </div>
                   </div>
@@ -341,7 +345,7 @@ const ChatWindow = () => {
                         <p className="font-medium truncate">{contact.name}</p>
                         {contact.lastMessageTime && (
                           <span className="text-xs text-gray-500">
-                            {formatTime(contact.lastMessageTime)}
+                            {formatTime(new Date(contact.lastMessageTime))}
                           </span>
                         )}
                       </div>

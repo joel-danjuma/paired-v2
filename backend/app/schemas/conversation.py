@@ -37,4 +37,16 @@ class Conversation(BaseModel):
         from_attributes = True
 
 class ConversationWithMessages(Conversation):
-    messages: List[Message] = [] 
+    messages: List[Message] = []
+
+class ContactInfo(BaseModel):
+    """Contact information for the messaging UI"""
+    id: str  # conversation_id
+    name: str  # other participant's name
+    avatar: Optional[str] = None
+    lastMessage: Optional[str] = None
+    lastMessageTime: Optional[datetime] = None
+    unread: Optional[int] = 0
+    
+    class Config:
+        from_attributes = True 

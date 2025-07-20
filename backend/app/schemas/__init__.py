@@ -2,7 +2,7 @@ from .auth import Token, RefreshToken, UserRegister, UserLogin
 from .user import UserProfile, UserUpdate, UserPublicProfile, User, UserWithListings
 from .listing import ListingCreate, ListingUpdate, Listing, ListingWithUser
 from .match import MatchAction, MatchRecommendation, MutualMatch
-from .conversation import Conversation, Message, MessageCreate, ConversationCreate
+from .conversation import Conversation, Message, MessageCreate, ConversationCreate, ContactInfo
 
 # Resolve forward references
 User.model_rebuild()
@@ -33,6 +33,7 @@ __all__ = [
     "ConversationWithMessages",
     "MessageCreate",
     "Message",
+    "ContactInfo",
     "IdentityDocumentUpload",
     "VerificationResult",
     "EmailVerificationRequest",
