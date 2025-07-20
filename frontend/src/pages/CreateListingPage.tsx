@@ -137,24 +137,42 @@ const CreateListingPage = () => {
       return;
     }
 
+    if (!listingIntent) {
+      toast.error('Please select a listing type first');
+      setStep(1);
+      return;
+    }
+
     const formData = form.getValues();
     console.log('Creating listing with data:', formData);
     console.log('Premium boost selected:', isPremiumSelected);
+    console.log('Listing intent:', listingIntent);
 
     try {
-      // Prepare listing data for API - match backend schema exactly
+      // Determine listing type based on intent
+      let listing_type;
+      if (listingIntent === 'offer-room') {
+        listing_type = 'room';
+      } else if (listingIntent === 'seek-roommate') {
+        listing_type = 'roommate_wanted';
+      } else {
+        throw new Error('Please select listing type first');
+      }
+
+      // Prepare listing data to match backend schema exactly
       const listingData = {
+        listing_type: listing_type,
         title: formData.title,
         description: formData.description,
-        city: formData.location, // Map location to city field
+        city: formData.location,
         address: formData.location,
+        state: formData.location, // Using location as state for now
         price_min: formData.rent ? parseFloat(formData.rent.toString()) : null,
         price_max: formData.rent ? parseFloat(formData.rent.toString()) : null,
         available_from: formData.moveInDate ? new Date(formData.moveInDate).toISOString() : null,
-        // Fix enum to match backend ListingType: only 'room' or 'roommate_wanted'
-        listing_type: formData.roomType === 'shared' ? 'roommate_wanted' : 'room',
-        // Backend expects 'property_details' not 'amenities'
         property_details: {
+          room_type: formData.roomType,
+          bathrooms: formData.bathrooms,
           amenities: [
             ...(formData.furnished ? ['Furnished'] : []),
             ...(formData.parking ? ['Parking'] : []),
@@ -162,21 +180,21 @@ const CreateListingPage = () => {
             ...(formData.wifi ? ['WiFi'] : []),
             ...(formData.laundry ? ['Laundry'] : []),
             ...(formData.airConditioning ? ['Air Conditioning'] : [])
-          ],
-          room_type: formData.roomType,
-          bathrooms: formData.bathrooms
+          ]
         },
-        // Backend expects 'lifestyle_preferences' not 'preferences'
         lifestyle_preferences: {
           smoking_allowed: formData.smoking,
           pets_allowed: formData.pets,
           preferred_gender: formData.gender,
           ideal_roommate_description: formData.idealRoommateDesc,
           looking_for: formData.lookingFor
-        }
+        },
+        images: [] // Empty array for now
       };
 
-      const response = await fetch(`${API_BASE_URL}/listings`, {
+      console.log('Sending listing data:', listingData);
+
+      const response = await fetch(`${API_BASE_URL}/listings/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -7,6 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Filter, Search, MapPin, DollarSign, Calendar, Users, Wifi, Car, Home, Zap } from 'lucide-react';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1";
 
@@ -154,7 +156,11 @@ const BrowseRoomsPage = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="flex flex-col min-h-screen">
+      <Header />
+      
+      <main className="flex-1">
+        <div className="container mx-auto px-4 py-8">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Browse Available Rooms</h1>
@@ -374,6 +380,10 @@ const BrowseRoomsPage = () => {
           ))}
         </div>
       )}
+        </div>
+      </main>
+      
+      <Footer />
     </div>
   );
 };
