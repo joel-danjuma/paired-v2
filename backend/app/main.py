@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Request, Response, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -60,9 +60,47 @@ app.add_middleware(
     allowed_hosts=settings.trusted_hosts
 )
 
-# Include API routes
+# Include API routes FIRST - this ensures they take priority
 app.include_router(api_router, prefix="/api/v1")
 
-# Mount static files for the frontend
-# This will serve index.html for any path that is not an API call or a file
-app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static") 
+# Add a health check endpoint for deployment monitoring
+@app.get("/api/v1/health")
+async def health_check():
+    return {"status": "healthy", "service": "paired-backend"}
+
+# Custom middleware to handle static files without interfering with API routes
+@app.middleware("http")
+async def serve_static_files(request: Request, call_next):
+    # If it's an API request, let it pass through normally
+    if request.url.path.startswith("/api/"):
+        return await call_next(request)
+    
+    # For non-API requests, serve static files
+    try:
+        response = await call_next(request)
+        # If the route wasn't found (404), serve index.html for SPA routing
+        if response.status_code == 404 and os.path.exists(STATIC_DIR):
+            index_path = os.path.join(STATIC_DIR, "index.html")
+            if os.path.exists(index_path):
+                return FileResponse(index_path)
+        return response
+    except Exception:
+        # If static directory exists and this is not an API route, serve index.html
+        if os.path.exists(STATIC_DIR):
+            index_path = os.path.join(STATIC_DIR, "index.html")
+            if os.path.exists(index_path):
+                return FileResponse(index_path)
+        raise HTTPException(status_code=404, detail="Not found")
+
+# Mount static files at /static to serve assets
+if os.path.exists(STATIC_DIR):
+    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+# Root endpoint fallback
+@app.get("/")
+async def root():
+    if os.path.exists(STATIC_DIR):
+        index_path = os.path.join(STATIC_DIR, "index.html")
+        if os.path.exists(index_path):
+            return FileResponse(index_path)
+    return {"message": "Paired Backend API", "docs": "/docs", "health": "/api/v1/health"} 
