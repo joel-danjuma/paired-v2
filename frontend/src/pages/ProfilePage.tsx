@@ -152,12 +152,31 @@ const ProfilePage = () => {
                       <CardTitle>About Me</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-gray-700">{userProfile?.bio || 'Software developer who enjoys hiking and reading. Looking for a clean and quiet living space.'}</p>
+                      {userProfile?.bio ? (
+                        <p className="text-gray-700">{userProfile.bio}</p>
+                      ) : (
+                        <div className="text-center py-8">
+                          <p className="text-gray-500 mb-4">No bio added yet</p>
+                          <Button asChild variant="outline" size="sm">
+                            <Link to="/onboarding">Complete Your Profile</Link>
+                          </Button>
+                        </div>
+                      )}
                       
                       <div className="mt-6">
                         <h3 className="text-lg font-semibold mb-3">Interests & Hobbies</h3>
-                        <p className="text-gray-700 mb-4">{userProfile?.interests || 'Technology, hiking, photography, and reading'}</p>
-                        <p className="text-gray-700">{userProfile?.hobbies || 'Coding side projects, mountain biking, and cooking'}</p>
+                        {userProfile?.interests || userProfile?.hobbies ? (
+                          <>
+                            {userProfile?.interests && (
+                              <p className="text-gray-700 mb-4">{userProfile.interests}</p>
+                            )}
+                            {userProfile?.hobbies && (
+                              <p className="text-gray-700">{userProfile.hobbies}</p>
+                            )}
+                          </>
+                        ) : (
+                          <p className="text-gray-500 italic">No interests or hobbies added yet</p>
+                        )}
                       </div>
 
                       <div className="mt-6">
@@ -165,19 +184,19 @@ const ProfilePage = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           <div>
                             <p className="text-sm font-medium text-gray-500">Music Taste</p>
-                            <p className="text-gray-700">{userProfile?.musicPreference || 'Indie rock, jazz, and electronic'}</p>
+                            <p className="text-gray-700">{userProfile?.musicPreference || <span className="text-gray-500 italic">Not specified</span>}</p>
                           </div>
                           <div>
                             <p className="text-sm font-medium text-gray-500">Food Preferences</p>
-                            <p className="text-gray-700">{userProfile?.foodPreference || 'Vegetarian-friendly, enjoy cooking'}</p>
+                            <p className="text-gray-700">{userProfile?.foodPreference || <span className="text-gray-500 italic">Not specified</span>}</p>
                           </div>
                           <div>
                             <p className="text-sm font-medium text-gray-500">Drinking Habits</p>
-                            <p className="text-gray-700 capitalize">{userProfile?.drinkingHabits || 'occasionally'}</p>
+                            <p className="text-gray-700 capitalize">{userProfile?.drinkingHabits || <span className="text-gray-500 italic">Not specified</span>}</p>
                           </div>
                           <div>
                             <p className="text-sm font-medium text-gray-500">Noise Preference</p>
-                            <p className="text-gray-700 capitalize">{userProfile?.noiseLevel || 'moderate'}</p>
+                            <p className="text-gray-700 capitalize">{userProfile?.noiseLevel || <span className="text-gray-500 italic">Not specified</span>}</p>
                           </div>
                         </div>
                       </div>

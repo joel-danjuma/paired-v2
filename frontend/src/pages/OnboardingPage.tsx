@@ -24,6 +24,14 @@ const OnboardingPage = () => {
   const { user, token } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Prevent access if not logged in
+  React.useEffect(() => {
+    if (!user || !token) {
+      toast.error("Please log in to complete your profile");
+      navigate('/login');
+    }
+  }, [user, token, navigate]);
   const [formData, setFormData] = useState({
     // Basic info - all empty to force user input
     bio: '',
@@ -65,12 +73,17 @@ const OnboardingPage = () => {
         toast.error("Please write a short bio about yourself");
         return false;
       }
-      if (!formData.age) {
-        toast.error("Please enter your age");
+      if (!formData.age || parseInt(formData.age) < 18 || parseInt(formData.age) > 100) {
+        toast.error("Please enter a valid age (18-100)");
         return false;
       }
       if (!formData.gender) {
         toast.error("Please select your gender");
+        return false;
+      }
+      // Occupation is optional but encourage completion
+      if (!formData.occupation.trim()) {
+        toast.error("Please enter your occupation or student status");
         return false;
       }
     } else if (currentStep === 2) {
@@ -85,6 +98,20 @@ const OnboardingPage = () => {
       }
       if (!formData.cleanliness) {
         toast.error("Please select your cleanliness level");
+        return false;
+      }
+      if (!formData.guestPreference) {
+        toast.error("Please select your guest preference");
+        return false;
+      }
+      if (!formData.noiseLevel) {
+        toast.error("Please select your noise level preference");
+        return false;
+      }
+    } else if (currentStep === 3) {
+      // Validate final step - ensure at least some interests are filled
+      if (!formData.interests.trim() && !formData.hobbies.trim()) {
+        toast.error("Please share at least your interests or hobbies");
         return false;
       }
     }
@@ -123,10 +150,24 @@ const OnboardingPage = () => {
       
       if (!response.ok) {
         const errorData = await response.json();
+        
+        // Handle validation errors (422 status)
+        if (response.status === 422 && errorData.detail && Array.isArray(errorData.detail)) {
+          const validationErrors = errorData.detail.map((err: any) => 
+            `${err.loc ? err.loc.join(' -> ') : ''}: ${err.msg}`
+          ).join(', ');
+          throw new Error(`Validation error: ${validationErrors}`);
+        }
+        
         throw new Error(errorData.detail || 'Failed to update profile');
       }
 
-      toast.success("Profile preferences saved!");
+      const updatedProfile = await response.json();
+      console.log('Profile updated successfully:', updatedProfile);
+      
+      toast.success("Profile setup complete! Welcome to Paired!");
+      
+      // Only redirect to dashboard after successful completion
       navigate('/dashboard');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to save preferences');
