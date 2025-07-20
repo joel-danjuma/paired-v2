@@ -192,6 +192,9 @@ export const getFormattedLocation = (city: string): string => {
   return city; // Return as-is if state not found
 };
 
+// Extract just the state names for location filters
+export const NIGERIAN_STATE_NAMES: string[] = NIGERIAN_STATES.map(state => state.name);
+
 // Major cities for quick selection
 export const MAJOR_NIGERIAN_CITIES = [
   "Lagos", "Abuja", "Kano", "Ibadan", "Port Harcourt", "Benin City", 

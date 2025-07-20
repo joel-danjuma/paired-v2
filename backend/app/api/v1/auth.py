@@ -29,10 +29,47 @@ async def register(
     existing_user = result.scalar_one_or_none()
     
     if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered"
-        )
+        # If user exists but is inactive (soft deleted), reactivate them
+        if not existing_user.is_active:
+            # Reactivate the account with new data
+            existing_user.is_active = True
+            existing_user.password_hash = get_password_hash(user_data.password)
+            existing_user.first_name = user_data.first_name
+            existing_user.last_name = user_data.last_name
+            existing_user.user_type = user_data.user_type
+            existing_user.phone = user_data.phone
+            
+            # Reset verification status since it's essentially a new registration
+            existing_user.is_verified_email = False
+            existing_user.is_verified_phone = False
+            
+            await db.commit()
+            await db.refresh(existing_user)
+            
+            # Send welcome email for reactivated account
+            try:
+                await notification_service.send_welcome_email(
+                    existing_user.email, 
+                    existing_user.first_name or "User"
+                )
+            except Exception as e:
+                print(f"Failed to send welcome email: {e}")
+            
+            # Create tokens for reactivated account
+            access_token = create_access_token(data={"sub": str(existing_user.id)})
+            refresh_token = create_refresh_token(data={"sub": str(existing_user.id)})
+            
+            return Token(
+                access_token=access_token,
+                refresh_token=refresh_token,
+                expires_in=settings.jwt_expiration_hours * 3600
+            )
+        else:
+            # User exists and is active - cannot register again
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email already registered"
+            )
     
     # Create new user
     hashed_password = get_password_hash(user_data.password)

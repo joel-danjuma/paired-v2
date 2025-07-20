@@ -17,26 +17,28 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1";
+
 const OnboardingPage = () => {
   const navigate = useNavigate();
   const { user, token } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    // Basic info
+    // Basic info - all empty to force user input
     bio: '',
     occupation: '',
     age: '',
     gender: '',
-    // Preferences
+    // Preferences - all empty/default to force user input
     isSmoker: false,
     hasPets: false,
-    drinkingHabits: 'occasionally',
-    sleepSchedule: 'normal',
-    cleanliness: 'average',
-    guestPreference: 'occasionally',
-    noiseLevel: 'moderate',
-    // Interests
+    drinkingHabits: '',
+    sleepSchedule: '',
+    cleanliness: '',
+    guestPreference: '',
+    noiseLevel: '',
+    // Interests - all empty to force user input
     interests: '',
     hobbies: '',
     musicPreference: '',
@@ -56,8 +58,43 @@ const OnboardingPage = () => {
     setFormData(prev => ({ ...prev, [name]: checked }));
   };
 
+  const validateStep = () => {
+    if (currentStep === 1) {
+      // Validate required fields for step 1
+      if (!formData.bio.trim()) {
+        toast.error("Please write a short bio about yourself");
+        return false;
+      }
+      if (!formData.age) {
+        toast.error("Please enter your age");
+        return false;
+      }
+      if (!formData.gender) {
+        toast.error("Please select your gender");
+        return false;
+      }
+    } else if (currentStep === 2) {
+      // Validate required fields for step 2
+      if (!formData.drinkingHabits) {
+        toast.error("Please select your drinking habits");
+        return false;
+      }
+      if (!formData.sleepSchedule) {
+        toast.error("Please select your sleep schedule");
+        return false;
+      }
+      if (!formData.cleanliness) {
+        toast.error("Please select your cleanliness level");
+        return false;
+      }
+    }
+    return true;
+  };
+
   const handleNext = () => {
-    setCurrentStep(prev => prev + 1);
+    if (validateStep()) {
+      setCurrentStep(prev => prev + 1);
+    }
   };
 
   const handleBack = () => {
@@ -66,10 +103,16 @@ const OnboardingPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate final step
+    if (!validateStep()) {
+      return;
+    }
+    
     setIsSubmitting(true);
     
     try {
-      const response = await fetch('/api/v1/users/me/profile', {
+      const response = await fetch(`${API_BASE_URL}/users/me/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -84,7 +127,7 @@ const OnboardingPage = () => {
       }
 
       toast.success("Profile preferences saved!");
-      navigate('/profile');
+      navigate('/dashboard');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to save preferences');
     } finally {

@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider";
 import { Search, SlidersHorizontal } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
-import { MAJOR_NIGERIAN_CITIES, ALL_NIGERIAN_CITIES, searchNigerianLocations } from "@/data/nigerianLocations";
+import { NIGERIAN_STATE_NAMES } from "@/data/nigerianLocations";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1";
 
@@ -20,7 +20,7 @@ const PostsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLocation, setSelectedLocation] = useState<string>("all");
-  const [priceRange, setPriceRange] = useState([0, 100000000]); // Realistic Nigerian housing prices up to 100M Naira
+  const [priceRange, setPriceRange] = useState([50000, 5000000]); // Default range: ₦50k to ₦5M (realistic starting range)
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const { token } = useAuth();
 
@@ -90,8 +90,8 @@ const PostsPage = () => {
     return matchesQuery && matchesLocation && matchesPrice;
   });
 
-  // Use Nigerian cities for location filter
-  const locations = MAJOR_NIGERIAN_CITIES;
+  // Use Nigerian states for location filter
+  const locations = NIGERIAN_STATE_NAMES;
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -167,8 +167,8 @@ const PostsPage = () => {
                           className="w-full"
                         />
                         <div className="flex justify-between text-xs text-gray-500 mt-1">
-                          <span>₦0</span>
-                          <span>₦100M</span>
+                          <span>Min: ₦{priceRange[0].toLocaleString()}</span>
+                          <span>Max: ₦{priceRange[1].toLocaleString()}</span>
                         </div>
                       </div>
 
@@ -236,8 +236,8 @@ const PostsPage = () => {
                           className="w-full"
                         />
                         <div className="flex justify-between text-xs text-gray-500 mt-1">
-                          <span>₦0</span>
-                          <span>₦100M</span>
+                          <span>Min: ₦{priceRange[0].toLocaleString()}</span>
+                          <span>Max: ₦{priceRange[1].toLocaleString()}</span>
                         </div>
                       </div>
 

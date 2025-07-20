@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { SlidersHorizontal } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/components/ui/sonner";
-import { MAJOR_NIGERIAN_CITIES } from "@/data/nigerianLocations";
+import { NIGERIAN_STATE_NAMES } from "@/data/nigerianLocations";
 
 // Updated Roommate type to match backend
 export type Roommate = {
@@ -126,7 +126,7 @@ const RoommateFinder = () => {
     }
   };
 
-  const locations: string[] = MAJOR_NIGERIAN_CITIES; // Use comprehensive Nigerian cities data
+  const locations: string[] = NIGERIAN_STATE_NAMES; // Use Nigerian states for location filtering
 
   return (
     <div className="flex flex-col min-h-screen">

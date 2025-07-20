@@ -62,10 +62,10 @@ const CreateListingPage = () => {
       title: '',
       description: '',
       location: '',
-      rent: undefined, // Changed from 0 to undefined to show placeholder instead of hardcoded 0
+      rent: undefined, // No default - user must enter their own price
       moveInDate: '',
-      roomType: 'private',
-      bathrooms: 'private',
+      roomType: '', // No default - user must choose
+      bathrooms: '', // No default - user must choose
       furnished: false,
       parking: false,
       utilities: false,
@@ -74,7 +74,7 @@ const CreateListingPage = () => {
       airConditioning: false,
       smoking: false,
       pets: false,
-      gender: 'any',
+      gender: '', // No default - user must choose
       idealRoommateDesc: '',
       lookingFor: [],
     },
@@ -132,26 +132,32 @@ const CreateListingPage = () => {
     console.log('Premium boost selected:', isPremiumSelected);
 
     try {
-      // Prepare listing data for API
+      // Prepare listing data for API - match backend schema exactly
       const listingData = {
         title: formData.title,
         description: formData.description,
         city: formData.location, // Map location to city field
         address: formData.location,
-        price_min: formData.rent || 0,
-        price_max: formData.rent || 0,
-        available_from: formData.moveInDate,
-        listing_type: formData.roomType === 'private' ? 'ROOM' : 
-                     formData.roomType === 'shared' ? 'SHARED_ROOM' : 'APARTMENT',
-        amenities: [
-          ...(formData.furnished ? ['Furnished'] : []),
-          ...(formData.parking ? ['Parking'] : []),
-          ...(formData.utilities ? ['Utilities Included'] : []),
-          ...(formData.wifi ? ['WiFi'] : []),
-          ...(formData.laundry ? ['Laundry'] : []),
-          ...(formData.airConditioning ? ['Air Conditioning'] : [])
-        ],
-        preferences: {
+        price_min: formData.rent ? parseFloat(formData.rent.toString()) : null,
+        price_max: formData.rent ? parseFloat(formData.rent.toString()) : null,
+        available_from: formData.moveInDate ? new Date(formData.moveInDate).toISOString() : null,
+        // Fix enum to match backend ListingType: only 'room' or 'roommate_wanted'
+        listing_type: formData.roomType === 'shared' ? 'roommate_wanted' : 'room',
+        // Backend expects 'property_details' not 'amenities'
+        property_details: {
+          amenities: [
+            ...(formData.furnished ? ['Furnished'] : []),
+            ...(formData.parking ? ['Parking'] : []),
+            ...(formData.utilities ? ['Utilities Included'] : []),
+            ...(formData.wifi ? ['WiFi'] : []),
+            ...(formData.laundry ? ['Laundry'] : []),
+            ...(formData.airConditioning ? ['Air Conditioning'] : [])
+          ],
+          room_type: formData.roomType,
+          bathrooms: formData.bathrooms
+        },
+        // Backend expects 'lifestyle_preferences' not 'preferences'
+        lifestyle_preferences: {
           smoking_allowed: formData.smoking,
           pets_allowed: formData.pets,
           preferred_gender: formData.gender,
@@ -160,7 +166,7 @@ const CreateListingPage = () => {
         }
       };
 
-      const response = await fetch('/api/v1/listings/', {
+      const response = await fetch(`${API_BASE_URL}/listings`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -171,6 +177,15 @@ const CreateListingPage = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
+        
+        // Handle validation errors (422 status)
+        if (response.status === 422 && errorData.detail && Array.isArray(errorData.detail)) {
+          const validationErrors = errorData.detail.map((err: any) => 
+            `${err.loc ? err.loc.join(' -> ') : ''}: ${err.msg}`
+          ).join(', ');
+          throw new Error(`Validation error: ${validationErrors}`);
+        }
+        
         throw new Error(errorData.detail || 'Failed to create listing');
       }
 

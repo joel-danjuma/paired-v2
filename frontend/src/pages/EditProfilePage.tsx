@@ -11,11 +11,13 @@ import { toast } from '@/components/ui/sonner';
 import { Pencil } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1";
+
 const EditProfilePage = () => {
   const navigate = useNavigate();
   const { user, token } = useAuth();
   
-  // Initialize form with empty values - let users fill in their own data
+  // Initialize form with completely empty values - NO defaults
   const [formData, setFormData] = useState({
     name: user?.name || '',
     bio: '',
@@ -46,7 +48,7 @@ const EditProfilePage = () => {
     e.preventDefault();
     
     try {
-      const response = await fetch('/api/v1/users/me/profile', {
+      const response = await fetch(`${API_BASE_URL}/users/me/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
