@@ -28,6 +28,8 @@ import { Badge } from '@/components/ui/badge';
 import { Info, Upload, Plus, Check, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1";
+
 type ListingFormValues = {
   title: string;
   description: string;
