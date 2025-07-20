@@ -26,13 +26,13 @@ def search_for_listings(city: str, max_budget: int, min_bedrooms: int = 1):
     """
     print(f"Searching for listings in {city} with a max budget of {max_budget} and at least {min_bedrooms} bedroom(s)...")
     
-    # Mock data - in production this would query the database
+    # Mock data with realistic Nigerian pricing - in production this would query the database
     return [
         {
             "title": f"Modern {min_bedrooms}-Bedroom Apartment",
             "address": "123 Main St", 
             "city": city, 
-            "rent": min(max_budget - 50, 1400), 
+            "rent": min(max_budget - 50000, max_budget * 0.9), 
             "bedrooms": min_bedrooms,
             "amenities": ["WiFi", "Parking", "Kitchen"]
         },
@@ -40,7 +40,7 @@ def search_for_listings(city: str, max_budget: int, min_bedrooms: int = 1):
             "title": f"Cozy {min_bedrooms}-Bedroom House",
             "address": "456 Oak Ave", 
             "city": city, 
-            "rent": min(max_budget - 100, 1350), 
+            "rent": min(max_budget - 100000, max_budget * 0.8), 
             "bedrooms": min_bedrooms,
             "amenities": ["Garden", "Parking", "Furnished"]
         }
@@ -58,21 +58,59 @@ def find_compatible_roommates(preferences: Dict[str, Any]):
     """
     print(f"Finding compatible roommates with preferences: {preferences}")
     
-    # Mock data - in production this would use the matching algorithm
-    return [
-        {
-            "name": "Alex Johnson",
-            "compatibility_score": 0.85,
-            "shared_interests": ["reading", "hiking"],
-            "lifestyle": "clean and quiet"
-        },
-        {
-            "name": "Jamie Smith", 
-            "compatibility_score": 0.78,
-            "shared_interests": ["cooking", "movies"],
-            "lifestyle": "social and organized"
-        }
-    ]
+    try:
+        # Enhanced mock data with better error handling
+        roommates = [
+            {
+                "name": "Alex Johnson",
+                "compatibility_score": 0.85,
+                "shared_interests": ["reading", "hiking"],
+                "lifestyle": "clean and quiet",
+                "age": 24,
+                "occupation": "Software Engineer"
+            },
+            {
+                "name": "Jamie Smith", 
+                "compatibility_score": 0.78,
+                "shared_interests": ["cooking", "movies"],
+                "lifestyle": "social and organized",
+                "age": 26,
+                "occupation": "Teacher"
+            },
+            {
+                "name": "Casey Lee",
+                "compatibility_score": 0.72,
+                "shared_interests": ["fitness", "music"],
+                "lifestyle": "active and friendly",
+                "age": 23,
+                "occupation": "Designer"
+            }
+        ]
+        
+        # Filter based on preferences if provided
+        if preferences:
+            lifestyle_pref = preferences.get('lifestyle', '').lower()
+            if lifestyle_pref:
+                # Sort by lifestyle match
+                roommates = sorted(roommates, 
+                    key=lambda x: 1 if lifestyle_pref in x['lifestyle'].lower() else 0, 
+                    reverse=True)
+        
+        return roommates
+        
+    except Exception as e:
+        print(f"Error in find_compatible_roommates: {e}")
+        # Return fallback data if there's an error
+        return [
+            {
+                "name": "Taylor Wilson",
+                "compatibility_score": 0.70,
+                "shared_interests": ["movies", "cooking"],
+                "lifestyle": "friendly and respectful",
+                "age": 25,
+                "occupation": "Student"
+            }
+        ]
 
 # --- AI Agent Service --- #
 
@@ -137,13 +175,33 @@ class AIAgentService:
                 model_name='gemini-1.5-flash',
                 tools=self.available_tools,
                 system_instruction="""You are a helpful roommate matching assistant. Help users find compatible roommates and suitable housing. 
-                
+
+                IMPORTANT RESPONSE RULES:
+                - NEVER mention function names, tool calls, or technical terms in responses
+                - Always respond naturally as if you personally searched/found results
+                - If you use tools, present results as your own recommendations
+                - Be conversational, friendly, and helpful
+                - Focus on the user's housing needs and preferences
+                - Don't say things like "I'll use search_for_listings" or "calling find_compatible_roommates"
+
                 Key capabilities:
-                - Search for rental listings based on user criteria
+                - Search for rental listings based on user criteria  
                 - Find compatible roommates based on preferences and lifestyle
                 - Provide housing advice and tips
                 - Extract preferences from natural language descriptions
-                
+
+                Example good responses:
+                - "I found some great listings for you in [city]..."
+                - "Based on your preferences, I recommend these roommates..."
+                - "Let me help you find something in your budget..."
+                - "Here are some compatible roommates I found..."
+
+                Example BAD responses (NEVER do this):
+                - "I'll use search_for_listings to find..."
+                - "Calling find_compatible_roommates function..."
+                - "Tool execution completed..."
+                - "Function call successful..."
+
                 Always be helpful, friendly, and focused on finding the best matches for users."""
             )
         except Exception as e:
@@ -169,7 +227,7 @@ class AIAgentService:
         """
         if not self.model:
             return {
-                "response": "AI agent is currently unavailable. Please try again later.",
+                "response": "I'm currently unavailable, but I'd love to help you find roommates and housing! Please try again in a moment.",
                 "conversation_id": conversation_id,
                 "tool_outputs": []
             }
@@ -229,7 +287,10 @@ class AIAgentService:
                                 response = tool_response
                                 
                             except Exception as e:
-                                print(f"Tool execution error: {e}")
+                                print(f"Tool execution error for {tool_name}: {e}")
+                                # Continue with a helpful message instead of failing
+                                fallback_message = "I'm having trouble accessing that information right now, but I'm here to help you find great roommates and housing options! Could you tell me more about what you're looking for?"
+                                response.text = fallback_message
             
             # Add AI response to conversation history
             self.conversations[conversation_id].append({
@@ -246,7 +307,7 @@ class AIAgentService:
         except Exception as e:
             print(f"AI processing error: {e}")
             return {
-                "response": "I'm sorry, I encountered an error processing your request. Please try again.",
+                "response": "I apologize, but I'm having a technical issue right now. I'm here to help you find roommates and housing! Could you try asking me again?",
                 "conversation_id": conversation_id,
                 "tool_outputs": []
             }

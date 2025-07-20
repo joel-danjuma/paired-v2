@@ -1,11 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from uuid import UUID
+from typing import List
 
 from app.models.database import get_db_session
 from app.models.user import User
+from app.models.listing import Listing
 from app.schemas.user import UserProfile, UserUpdate, UserPublicProfile, OnboardingData
+from app.schemas.listing import Listing as ListingSchema
 from app.schemas.verification import (
     IdentityDocumentUpload, 
     VerificationResult, 
@@ -191,4 +195,38 @@ async def upload_identity_document(
         current_user.verification_status = verification_result
         await db.commit()
     
-    return VerificationResult(**verification_result) 
+    return VerificationResult(**verification_result)
+
+@router.get("/me/listings", response_model=List[ListingSchema])
+async def get_current_user_listings(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db_session)
+):
+    """Get all listings for the current user"""
+    result = await db.execute(
+        select(Listing)
+        .where(Listing.user_id == current_user.id)
+        .where(Listing.status != "expired")  # Don't show deleted listings
+    )
+    listings = result.scalars().all()
+    return listings
+
+@router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_current_user_account(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db_session)
+):
+    """Delete current user's account (soft delete)"""
+    # Mark user as inactive instead of hard delete
+    current_user.is_active = False
+    
+    # Also soft delete all user's listings
+    result = await db.execute(
+        select(Listing).where(Listing.user_id == current_user.id)
+    )
+    listings = result.scalars().all()
+    for listing in listings:
+        listing.status = "expired"
+    
+    await db.commit()
+    return None 

@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider";
 import { Search, SlidersHorizontal } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
+import { MAJOR_NIGERIAN_CITIES, ALL_NIGERIAN_CITIES, searchNigerianLocations } from "@/data/nigerianLocations";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1";
 
@@ -19,7 +20,7 @@ const PostsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLocation, setSelectedLocation] = useState<string>("all");
-  const [priceRange, setPriceRange] = useState([0, 500000]); // Updated for Naira
+  const [priceRange, setPriceRange] = useState([0, 100000000]); // Realistic Nigerian housing prices up to 100M Naira
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const { token } = useAuth();
 
@@ -89,10 +90,8 @@ const PostsPage = () => {
     return matchesQuery && matchesLocation && matchesPrice;
   });
 
-  // Get unique locations for filter
-  const locations = Array.from(new Set(posts.map(post => 
-    post.location.split(',')[0].trim()
-  )));
+  // Use Nigerian cities for location filter
+  const locations = MAJOR_NIGERIAN_CITIES;
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -161,15 +160,15 @@ const PostsPage = () => {
                         <Slider
                           id="price-range"
                           min={0}
-                          max={500000}
-                          step={10000}
+                          max={100000000}
+                          step={100000}
                           value={priceRange}
                           onValueChange={setPriceRange}
                           className="w-full"
                         />
                         <div className="flex justify-between text-xs text-gray-500 mt-1">
                           <span>₦0</span>
-                          <span>₦500,000</span>
+                          <span>₦100M</span>
                         </div>
                       </div>
 
@@ -230,15 +229,15 @@ const PostsPage = () => {
                         <Slider
                           id="mobile-price-range"
                           min={0}
-                          max={500000}
-                          step={10000}
+                          max={100000000}
+                          step={100000}
                           value={priceRange}
                           onValueChange={setPriceRange}
                           className="w-full"
                         />
                         <div className="flex justify-between text-xs text-gray-500 mt-1">
                           <span>₦0</span>
-                          <span>₦500,000</span>
+                          <span>₦100M</span>
                         </div>
                       </div>
 

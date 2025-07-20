@@ -32,7 +32,7 @@ type ListingFormValues = {
   title: string;
   description: string;
   location: string;
-  rent: number;
+  rent: number | undefined;
   moveInDate: string;
   roomType: string;
   bathrooms: string;
@@ -52,7 +52,7 @@ type ListingFormValues = {
 
 const CreateListingPage = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const [step, setStep] = useState(1);
   const [isPremiumSelected, setIsPremiumSelected] = useState(false);
   const [imagePreview, setImagePreview] = useState<string[]>([]);
@@ -62,7 +62,7 @@ const CreateListingPage = () => {
       title: '',
       description: '',
       location: '',
-      rent: 0,
+      rent: undefined, // Changed from 0 to undefined to show placeholder instead of hardcoded 0
       moveInDate: '',
       roomType: 'private',
       bathrooms: 'private',
@@ -121,17 +121,78 @@ const CreateListingPage = () => {
   };
 
   // Finalize listing creation
-  const handleFinalize = () => {
+  const handleFinalize = async () => {
+    if (!token) {
+      toast.error("Please log in to create a listing");
+      return;
+    }
+
     const formData = form.getValues();
     console.log('Creating listing with data:', formData);
     console.log('Premium boost selected:', isPremiumSelected);
-    
-    toast.success("Your listing has been created!");
-    
-    if (isPremiumSelected) {
-      navigate('/payment');
-    } else {
-      navigate('/profile');
+
+    try {
+      // Prepare listing data for API
+      const listingData = {
+        title: formData.title,
+        description: formData.description,
+        city: formData.location, // Map location to city field
+        address: formData.location,
+        price_min: formData.rent || 0,
+        price_max: formData.rent || 0,
+        available_from: formData.moveInDate,
+        listing_type: formData.roomType === 'private' ? 'ROOM' : 
+                     formData.roomType === 'shared' ? 'SHARED_ROOM' : 'APARTMENT',
+        amenities: [
+          ...(formData.furnished ? ['Furnished'] : []),
+          ...(formData.parking ? ['Parking'] : []),
+          ...(formData.utilities ? ['Utilities Included'] : []),
+          ...(formData.wifi ? ['WiFi'] : []),
+          ...(formData.laundry ? ['Laundry'] : []),
+          ...(formData.airConditioning ? ['Air Conditioning'] : [])
+        ],
+        preferences: {
+          smoking_allowed: formData.smoking,
+          pets_allowed: formData.pets,
+          preferred_gender: formData.gender,
+          ideal_roommate_description: formData.idealRoommateDesc,
+          looking_for: formData.lookingFor
+        }
+      };
+
+      const response = await fetch('/api/v1/listings/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(listingData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to create listing');
+      }
+
+      const createdListing = await response.json();
+      console.log('Listing created successfully:', createdListing);
+      
+      toast.success("Your listing has been created!");
+      
+      if (isPremiumSelected) {
+        navigate('/payment', { 
+          state: { 
+            plan: 'premium', 
+            amount: 7000,
+            listingId: createdListing.id
+          } 
+        });
+      } else {
+        navigate('/my-listings');
+      }
+    } catch (error) {
+      console.error('Error creating listing:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to create listing');
     }
   };
 
@@ -238,7 +299,8 @@ const CreateListingPage = () => {
                               min="0"
                               placeholder="E.g., 150000"
                               {...field}
-                              onChange={(e) => field.onChange(Number(e.target.value))} 
+                              value={field.value || ''}
+                              onChange={(e) => field.onChange(e.target.value === '' ? undefined : Number(e.target.value))} 
                             />
                           </FormControl>
                           <FormMessage />
