@@ -70,6 +70,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (!response.ok) {
         const errorData = await response.json();
+        
+        // Handle validation errors (422 status)
+        if (response.status === 422 && errorData.detail && Array.isArray(errorData.detail)) {
+          const validationErrors = errorData.detail.map((err: any) => 
+            `${err.loc ? err.loc.join(' -> ') : ''}: ${err.msg}`
+          ).join(', ');
+          throw new Error(`Validation error: ${validationErrors}`);
+        }
+        
         throw new Error(errorData.detail || 'Failed to login');
       }
 
@@ -111,12 +120,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           last_name: name.split(' ')[1] || '',
           email,
           password,
-          user_type: 'SEEKER' // Add the required user_type field
+          user_type: 'seeker' // Use lowercase to match backend enum
         }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
+        
+        // Handle validation errors (422 status)
+        if (response.status === 422 && errorData.detail && Array.isArray(errorData.detail)) {
+          const validationErrors = errorData.detail.map((err: any) => 
+            `${err.loc ? err.loc.join(' -> ') : ''}: ${err.msg}`
+          ).join(', ');
+          throw new Error(`Validation error: ${validationErrors}`);
+        }
+        
         throw new Error(errorData.detail || 'Failed to register');
       }
 
