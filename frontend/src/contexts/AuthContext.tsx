@@ -109,7 +109,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const register = async (name: string, email: string, password: string) => {
+  const register = async (name: string, email: string, password: string, userType: string) => {
     setIsLoading(true);
     try {
       const response = await fetch(`${API_BASE_URL}/auth/register`, {
@@ -120,7 +120,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           last_name: name.split(' ')[1] || '',
           email,
           password,
-          user_type: 'seeker' // Use lowercase to match backend enum
+          user_type: userType // Use the selected user type
         }),
       });
 

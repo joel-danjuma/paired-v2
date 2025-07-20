@@ -13,6 +13,8 @@ const PostDetailPage = lazy(() => import("./pages/PostDetailPage"));
 const CreateListingPage = lazy(() => import("./pages/CreateListingPage"));
 const EditListingPage = lazy(() => import("./pages/EditListingPage"));
 const MyListingsPage = lazy(() => import("./pages/MyListingsPage"));
+const BrowseRoomsPage = lazy(() => import("./pages/BrowseRoomsPage"));
+const ProfilePromotionPage = lazy(() => import("./pages/ProfilePromotionPage"));
 const BoostListingPage = lazy(() => import("./pages/BoostListingPage"));
 const PaymentPage = lazy(() => import("./pages/PaymentPage"));
 const LoginPage = lazy(() => import("./pages/LoginPage"));
@@ -53,6 +55,8 @@ const App = () => (
               <Route path="/onboarding" element={<OnboardingPage />} />
               <Route path="/roommates" element={<RoommateFinder />} />
               <Route path="/roommates/:id" element={<RoommateDetailPage />} />
+              <Route path="/browse-rooms" element={<BrowseRoomsPage />} />
+              <Route path="/promote-profile" element={<ProfilePromotionPage />} />
               <Route path="/messages" element={<MessagesPage />} />
               <Route path="/messages/:id" element={<MessagesPage />} />
               <Route path="/dashboard" element={<DashboardPage />} />

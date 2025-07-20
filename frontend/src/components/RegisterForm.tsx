@@ -6,12 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const RegisterForm = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [userType, setUserType] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const { register } = useAuth();
@@ -25,11 +27,16 @@ const RegisterForm = () => {
       setError('Passwords do not match');
       return;
     }
+
+    if (!userType) {
+      setError('Please select whether you are looking for a room or have a room to offer');
+      return;
+    }
     
     setIsSubmitting(true);
 
     try {
-      const success = await register(name, email, password);
+      const success = await register(name, email, password, userType);
       if (success) {
         navigate('/onboarding');
       }
@@ -95,6 +102,19 @@ const RegisterForm = () => {
               required
               minLength={8}
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="userType">I am...</Label>
+            <Select value={userType} onValueChange={setUserType}>
+              <SelectTrigger id="userType">
+                <SelectValue placeholder="Choose your situation" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="seeker">Looking for a room 🏠</SelectItem>
+                <SelectItem value="provider">Have a room to offer 🏡</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           
           {error && (

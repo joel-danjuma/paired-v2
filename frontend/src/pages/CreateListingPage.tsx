@@ -30,6 +30,13 @@ import { useAuth } from '@/contexts/AuthContext';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1";
 
+const NIGERIAN_STATES = [
+  'Abia', 'Adamawa', 'Akwa Ibom', 'Anambra', 'Bauchi', 'Bayelsa', 'Benue', 'Borno', 'Cross River',
+  'Delta', 'Ebonyi', 'Edo', 'Ekiti', 'Enugu', 'Gombe', 'Imo', 'Jigawa', 'Kaduna', 'Kano', 'Katsina',
+  'Kebbi', 'Kogi', 'Kwara', 'Lagos', 'Nasarawa', 'Niger', 'Ogun', 'Ondo', 'Osun', 'Oyo', 'Plateau',
+  'Rivers', 'Sokoto', 'Taraba', 'Yobe', 'Zamfara', 'FCT - Abuja'
+];
+
 type ListingFormValues = {
   title: string;
   description: string;
@@ -56,6 +63,7 @@ const CreateListingPage = () => {
   const navigate = useNavigate();
   const { user, token } = useAuth();
   const [step, setStep] = useState(1);
+  const [listingIntent, setListingIntent] = useState(''); // 'offer-room' or 'seek-room'
   const [isPremiumSelected, setIsPremiumSelected] = useState(false);
   const [imagePreview, setImagePreview] = useState<string[]>([]);
 
@@ -248,12 +256,54 @@ const CreateListingPage = () => {
       <Card>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
-            {step === 1 && (
+            {step === 1 && !listingIntent && (
               <>
                 <CardHeader>
-                  <CardTitle>Listing Details</CardTitle>
+                  <CardTitle>What would you like to do?</CardTitle>
                   <CardDescription>
-                    Provide basic information about your property
+                    Choose your listing type to get started
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div 
+                      className="p-6 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors"
+                      onClick={() => {
+                        setListingIntent('offer-room');
+                        setStep(2);
+                      }}
+                    >
+                      <div className="text-center">
+                        <div className="text-4xl mb-4">🏡</div>
+                        <h3 className="text-lg font-semibold mb-2">I have a room to offer</h3>
+                        <p className="text-gray-600 text-sm">List your available room or property for potential roommates</p>
+                      </div>
+                    </div>
+
+                    <div 
+                      className="p-6 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-green-400 hover:bg-green-50 transition-colors"
+                      onClick={() => {
+                        setListingIntent('seek-roommate');
+                        setStep(2);
+                      }}
+                    >
+                      <div className="text-center">
+                        <div className="text-4xl mb-4">🏠</div>
+                        <h3 className="text-lg font-semibold mb-2">I'm looking for a room</h3>
+                        <p className="text-gray-600 text-sm">Create a profile to find rooms and connect with potential roommates</p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </>
+            )}
+
+            {step === 2 && listingIntent === 'offer-room' && (
+              <>
+                <CardHeader>
+                  <CardTitle>Room Details</CardTitle>
+                  <CardDescription>
+                    Provide basic information about your available room
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -637,6 +687,142 @@ const CreateListingPage = () => {
               </>
             )}
 
+            {step === 2 && listingIntent === 'seek-roommate' && (
+              <>
+                <CardHeader>
+                  <CardTitle>About You & Your Preferences</CardTitle>
+                  <CardDescription>
+                    Tell potential roommates about yourself and what you're looking for
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <FormField
+                    control={form.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Profile Headline</FormLabel>
+                        <FormControl>
+                          <Input placeholder="E.g., Young Professional Seeking Clean Roommate" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>About Yourself</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Tell potential roommates about yourself, your lifestyle, work schedule, hobbies, etc."
+                            className="min-h-[100px]"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="rent"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Budget Range (₦)</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="e.g., 50000"
+                              {...field}
+                              onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            Maximum monthly rent you can afford
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="location"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Preferred Location</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select preferred state" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {NIGERIAN_STATES.map((state) => (
+                                <SelectItem key={state} value={state}>
+                                  {state}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="space-y-4">
+                    <h4 className="font-medium">Lifestyle Preferences</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="smoking"
+                        render={({ field }) => (
+                          <FormItem className="flex items-start space-x-3 space-y-0">
+                            <FormControl>
+                              <Checkbox 
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel>I smoke</FormLabel>
+                              <FormDescription>Check if you smoke</FormDescription>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="pets"
+                        render={({ field }) => (
+                          <FormItem className="flex items-start space-x-3 space-y-0">
+                            <FormControl>
+                              <Checkbox 
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel>I have pets</FormLabel>
+                              <FormDescription>Check if you have pets</FormDescription>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </>
+            )}
+
             {step === 3 && (
               <>
                 <CardHeader>
@@ -719,8 +905,15 @@ const CreateListingPage = () => {
             )}
 
             <CardFooter className="flex justify-between">
-              {step > 1 ? (
-                <Button type="button" variant="outline" onClick={() => setStep(step - 1)}>
+              {step > 1 && listingIntent ? (
+                <Button type="button" variant="outline" onClick={() => {
+                  if (step === 2) {
+                    setListingIntent('');
+                    setStep(1);
+                  } else {
+                    setStep(step - 1);
+                  }
+                }}>
                   Back
                 </Button>
               ) : (
@@ -729,15 +922,15 @@ const CreateListingPage = () => {
                 </Button>
               )}
               
-              {step < 3 ? (
+              {step < 3 && listingIntent ? (
                 <Button type="button" onClick={() => setStep(step + 1)}>
                   Continue
                 </Button>
-              ) : (
+              ) : step === 3 ? (
                 <Button type="button" onClick={handleFinalize}>
                   {isPremiumSelected ? 'Continue to Payment' : 'Create Listing'}
                 </Button>
-              )}
+              ) : null}
             </CardFooter>
           </form>
         </Form>

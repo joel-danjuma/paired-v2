@@ -371,6 +371,24 @@ const OnboardingPage = () => {
                     </SelectContent>
                   </Select>
                 </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="guest">Guest Preference</Label>
+                  <Select 
+                    value={formData.guestPreference} 
+                    onValueChange={(value) => handleSelectChange('guestPreference', value)}
+                  >
+                    <SelectTrigger id="guest">
+                      <SelectValue placeholder="Select option" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="welcome">Welcome guests anytime</SelectItem>
+                      <SelectItem value="advance-notice">Advance notice preferred</SelectItem>
+                      <SelectItem value="rare">Rare guests only</SelectItem>
+                      <SelectItem value="no-guests">No guests</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </CardContent>
             </>
           )}

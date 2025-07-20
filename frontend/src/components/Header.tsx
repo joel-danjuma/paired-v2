@@ -41,22 +41,82 @@ const Header = () => {
             >
               Home
             </Link>
-            <Link
-              to="/posts"
-              className={`text-sm font-medium ${
-                location.pathname === "/posts" ? "text-paired-600" : "text-gray-600 hover:text-paired-600"
-              }`}
-            >
-              Find Rooms
-            </Link>
-            <Link
-              to="/roommates"
-              className={`text-sm font-medium ${
-                location.pathname === "/roommates" ? "text-paired-600" : "text-gray-600 hover:text-paired-600"
-              }`}
-            >
-              Find Roommates
-            </Link>
+            {/* Navigation links based on user type */}
+            {user?.user_type === 'seeker' ? (
+              <>
+                <Link
+                  to="/browse-rooms"
+                  className={`text-sm font-medium ${
+                    location.pathname === "/browse-rooms" ? "text-paired-600" : "text-gray-600 hover:text-paired-600"
+                  }`}
+                >
+                  Browse Rooms
+                </Link>
+                <Link
+                  to="/roommates"
+                  className={`text-sm font-medium ${
+                    location.pathname === "/roommates" ? "text-paired-600" : "text-gray-600 hover:text-paired-600"
+                  }`}
+                >
+                  Find Roommates
+                </Link>
+                <Link
+                  to="/create-listing"
+                  className={`text-sm font-medium ${
+                    location.pathname === "/create-listing" ? "text-paired-600" : "text-gray-600 hover:text-paired-600"
+                  }`}
+                >
+                  Post Request
+                </Link>
+              </>
+            ) : user?.user_type === 'provider' ? (
+              <>
+                <Link
+                  to="/posts"
+                  className={`text-sm font-medium ${
+                    location.pathname === "/posts" ? "text-paired-600" : "text-gray-600 hover:text-paired-600"
+                  }`}
+                >
+                  Browse Seekers
+                </Link>
+                <Link
+                  to="/create-listing"
+                  className={`text-sm font-medium ${
+                    location.pathname === "/create-listing" ? "text-paired-600" : "text-gray-600 hover:text-paired-600"
+                  }`}
+                >
+                  List Room
+                </Link>
+                <Link
+                  to="/my-listings"
+                  className={`text-sm font-medium ${
+                    location.pathname === "/my-listings" ? "text-paired-600" : "text-gray-600 hover:text-paired-600"
+                  }`}
+                >
+                  My Listings
+                </Link>
+              </>
+            ) : (
+              /* Default navigation for non-logged in users */
+              <>
+                <Link
+                  to="/posts"
+                  className={`text-sm font-medium ${
+                    location.pathname === "/posts" ? "text-paired-600" : "text-gray-600 hover:text-paired-600"
+                  }`}
+                >
+                  Find Rooms
+                </Link>
+                <Link
+                  to="/roommates"
+                  className={`text-sm font-medium ${
+                    location.pathname === "/roommates" ? "text-paired-600" : "text-gray-600 hover:text-paired-600"
+                  }`}
+                >
+                  Find Roommates
+                </Link>
+              </>
+            )}
             {user && (
               <Link
                 to="/messages"
@@ -65,16 +125,6 @@ const Header = () => {
                 }`}
               >
                 Messages
-              </Link>
-            )}
-            {user && (
-              <Link
-                to="/create-listing"
-                className={`text-sm font-medium ${
-                  location.pathname === "/create-listing" ? "text-paired-600" : "text-gray-600 hover:text-paired-600"
-                }`}
-              >
-                Create Listing
               </Link>
             )}
           </nav>
