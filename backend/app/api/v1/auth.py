@@ -18,6 +18,28 @@ from app.services import notification_service
 
 router = APIRouter()
 
+@router.get("/debug")
+async def debug_endpoint():
+    """Simple debug endpoint to test API without database"""
+    try:
+        import os
+        return {
+            "status": "api_working",
+            "environment": os.getenv("ENVIRONMENT", "unknown"),
+            "database_url_set": bool(os.getenv("DATABASE_URL")),
+            "jwt_secret_set": bool(os.getenv("JWT_SECRET_KEY")),
+            "python_version": os.sys.version,
+            "settings_loaded": settings is not None,
+            "settings_debug": settings.debug if settings else "unknown"
+        }
+    except Exception as e:
+        import traceback
+        return {
+            "status": "error",
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }
+
 @router.get("/health")
 async def health_check(db: AsyncSession = Depends(get_db_session)):
     """Health check endpoint to test database connectivity"""
@@ -78,10 +100,12 @@ async def register(
             
             # Send welcome email for reactivated account
             try:
-                await notification_service.send_welcome_email(
-                    existing_user.email, 
-                    existing_user.first_name or "User"
-                )
+                # Temporarily disabled to test if this causes issues
+                # await notification_service.send_welcome_email(
+                #     existing_user.email, 
+                #     existing_user.first_name or "User"
+                # )
+                print("Welcome email disabled for testing")
             except Exception as e:
                 print(f"Failed to send welcome email: {e}")
             
@@ -118,10 +142,12 @@ async def register(
     
     # Send welcome email
     try:
-        await notification_service.send_welcome_email(
-            new_user.email, 
-            new_user.first_name or "User"
-        )
+        # Temporarily disabled to test if this causes issues
+        # await notification_service.send_welcome_email(
+        #     new_user.email, 
+        #     new_user.first_name or "User"
+        # )
+        print("Welcome email disabled for testing")
     except Exception as e:
         print(f"Failed to send welcome email: {e}")
         # Don't fail registration if email fails
