@@ -101,28 +101,44 @@ const ProfilePage = () => {
                     </div>
                   )}
                   <h2 className="text-2xl font-bold">{user?.name}</h2>
-                  <p className="text-gray-600">{userProfile?.occupation || 'Software Engineer'}</p>
-                  <p className="text-sm text-gray-500 mt-1">{userProfile?.age || '28'} years old • {userProfile?.gender || 'Male'}</p>
+                  <p className="text-gray-600">
+                    {userProfile?.lifestyle_data?.occupation || (
+                      <span className="text-gray-400 italic">No occupation specified</span>
+                    )}
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {userProfile?.lifestyle_data?.age ? `${userProfile.lifestyle_data.age} years old` : 'Age not specified'} • {userProfile?.lifestyle_data?.gender || 'Gender not specified'}
+                  </p>
                   
                   <div className="mt-6">
                     <h3 className="text-sm font-semibold text-gray-700 mb-2">Roommate Compatibility</h3>
                     <div className="flex flex-wrap gap-2 justify-center">
-                      {!userProfile?.isSmoker && (
+                      {userProfile?.lifestyle_data?.is_smoker === false && (
                         <Badge variant="outline">Non-smoker</Badge>
                       )}
-                      {!userProfile?.hasPets && (
+                      {userProfile?.lifestyle_data?.is_smoker === true && (
+                        <Badge variant="outline">Smoker</Badge>
+                      )}
+                      {userProfile?.lifestyle_data?.has_pets === false && (
                         <Badge variant="outline">No pets</Badge>
                       )}
-                      <Badge variant="outline">
-                        {userProfile?.cleanliness === 'very-clean' ? 'Very clean' : 
-                         userProfile?.cleanliness === 'average' ? 'Average cleanliness' : 
-                         userProfile?.cleanliness === 'relaxed' ? 'Relaxed cleanliness' : 'Messy'}
-                      </Badge>
-                      <Badge variant="outline">
-                        {userProfile?.sleepSchedule === 'early' ? 'Early bird' : 
-                         userProfile?.sleepSchedule === 'normal' ? 'Normal sleeper' : 
-                         userProfile?.sleepSchedule === 'late' ? 'Night owl' : 'Variable schedule'}
-                      </Badge>
+                      {userProfile?.lifestyle_data?.has_pets === true && (
+                        <Badge variant="outline">Has pets</Badge>
+                      )}
+                      {userProfile?.lifestyle_data?.cleanliness && (
+                        <Badge variant="outline">
+                          {userProfile.lifestyle_data.cleanliness === 'very-clean' ? 'Very clean' : 
+                           userProfile.lifestyle_data.cleanliness === 'average' ? 'Average cleanliness' : 
+                           userProfile.lifestyle_data.cleanliness === 'relaxed' ? 'Relaxed cleanliness' : 'Messy'}
+                        </Badge>
+                      )}
+                      {userProfile?.lifestyle_data?.sleep_schedule && (
+                        <Badge variant="outline">
+                          {userProfile.lifestyle_data.sleep_schedule === 'early' ? 'Early bird' : 
+                           userProfile.lifestyle_data.sleep_schedule === 'normal' ? 'Normal sleeper' : 
+                           userProfile.lifestyle_data.sleep_schedule === 'late' ? 'Night owl' : 'Variable schedule'}
+                        </Badge>
+                      )}
                     </div>
                   </div>
 
@@ -280,37 +296,59 @@ const ProfilePage = () => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                           <h3 className="text-sm font-medium text-gray-500 mb-1">Smoking</h3>
-                          <p>{userProfile?.isSmoker ? 'Smoker' : 'Non-smoker'}</p>
+                          <p>
+                            {userProfile?.lifestyle_data?.is_smoker === true ? 'Smoker' : 
+                             userProfile?.lifestyle_data?.is_smoker === false ? 'Non-smoker' : 
+                             'Not specified'}
+                          </p>
                         </div>
                         <div>
                           <h3 className="text-sm font-medium text-gray-500 mb-1">Pets</h3>
-                          <p>{userProfile?.hasPets ? 'Has pets' : 'No pets'}</p>
+                          <p>
+                            {userProfile?.lifestyle_data?.has_pets === true ? 'Has pets' : 
+                             userProfile?.lifestyle_data?.has_pets === false ? 'No pets' : 
+                             'Not specified'}
+                          </p>
                         </div>
                         <div>
                           <h3 className="text-sm font-medium text-gray-500 mb-1">Drinking Habits</h3>
-                          <p className="capitalize">{userProfile?.drinkingHabits || 'occasionally'}</p>
+                          <p className="capitalize">{userProfile?.lifestyle_data?.drinking_habits || 'Not specified'}</p>
                         </div>
                         <div>
                           <h3 className="text-sm font-medium text-gray-500 mb-1">Sleep Schedule</h3>
                           <p className="capitalize">
-                            {userProfile?.sleepSchedule === 'early' ? 'Early bird' : 
-                             userProfile?.sleepSchedule === 'normal' ? 'Normal schedule (11PM-7AM)' : 
-                             userProfile?.sleepSchedule === 'late' ? 'Night owl' : 
-                             'Variable schedule'}
+                            {userProfile?.lifestyle_data?.sleep_schedule === 'early' ? 'Early bird' : 
+                             userProfile?.lifestyle_data?.sleep_schedule === 'normal' ? 'Normal schedule (11PM-7AM)' : 
+                             userProfile?.lifestyle_data?.sleep_schedule === 'late' ? 'Night owl' : 
+                             userProfile?.lifestyle_data?.sleep_schedule ? userProfile.lifestyle_data.sleep_schedule : 'Not specified'}
                           </p>
                         </div>
                         <div>
                           <h3 className="text-sm font-medium text-gray-500 mb-1">Cleanliness</h3>
                           <p className="capitalize">
-                            {userProfile?.cleanliness === 'very-clean' ? 'Very clean' : 
-                             userProfile?.cleanliness === 'average' ? 'Average' : 
-                             userProfile?.cleanliness === 'relaxed' ? 'Relaxed' : 'Messy'}
+                            {userProfile?.lifestyle_data?.cleanliness === 'very-clean' ? 'Very clean' : 
+                             userProfile?.lifestyle_data?.cleanliness === 'average' ? 'Average' : 
+                             userProfile?.lifestyle_data?.cleanliness === 'relaxed' ? 'Relaxed' : 
+                             userProfile?.lifestyle_data?.cleanliness === 'messy' ? 'Messy' :
+                             'Not specified'}
                           </p>
                         </div>
                         <div>
                           <h3 className="text-sm font-medium text-gray-500 mb-1">Noise Preference</h3>
-                          <p className="capitalize">{userProfile?.noiseLevel || 'moderate'}</p>
+                          <p className="capitalize">{userProfile?.lifestyle_data?.noise_level || 'Not specified'}</p>
                         </div>
+                        {userProfile?.preferences?.interests && (
+                          <div className="md:col-span-2">
+                            <h3 className="text-sm font-medium text-gray-500 mb-1">Interests</h3>
+                            <p>{userProfile.preferences.interests}</p>
+                          </div>
+                        )}
+                        {userProfile?.preferences?.hobbies && (
+                          <div className="md:col-span-2">
+                            <h3 className="text-sm font-medium text-gray-500 mb-1">Hobbies</h3>
+                            <p>{userProfile.preferences.hobbies}</p>
+                          </div>
+                        )}
                       </div>
                     </CardContent>
                     <CardFooter>
