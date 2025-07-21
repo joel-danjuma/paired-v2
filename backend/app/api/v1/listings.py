@@ -48,19 +48,22 @@ async def create_listing(
 ):
     """Create a new listing"""
     try:
-        # Convert listing data to dict and handle timezone-aware datetime fields
+        # Convert listing data to dict
         listing_dict = listing_data.dict()
         print(f"Received listing data: {listing_dict}")
         
-        # Handle timezone-aware datetime conversion for database compatibility
-        for field_name in ['available_from', 'available_until']:
-            if field_name in listing_dict and listing_dict[field_name] is not None:
-                dt_value = listing_dict[field_name]
-                if isinstance(dt_value, datetime) and dt_value.tzinfo is not None:
-                    # Convert timezone-aware datetime to UTC and make it timezone-naive
-                    # This is temporary until database migration is applied
-                    utc_dt = dt_value.astimezone(timezone.utc)
-                    listing_dict[field_name] = utc_dt.replace(tzinfo=None)
+        # Validate required fields
+        if not listing_dict.get('title'):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Title is required"
+            )
+        
+        if not listing_dict.get('listing_type'):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Listing type is required"
+            )
         
         # Remove any None values and invalid fields
         clean_dict = {k: v for k, v in listing_dict.items() if v is not None}
@@ -73,9 +76,6 @@ async def create_listing(
         
         print(f"Created listing object: {new_listing}")
         
-        # Placeholder for geocoding address to lat/lon
-        # new_listing.location = 'POINT(lon lat)'
-        
         db.add(new_listing)
         print("Added listing to session")
         
@@ -87,6 +87,9 @@ async def create_listing(
         
         return new_listing
         
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
     except Exception as e:
         await db.rollback()
         error_traceback = traceback.format_exc()

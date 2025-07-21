@@ -100,12 +100,14 @@ async def update_onboarding_data(
     """Update user profile with onboarding data."""
     try:
         update_data = onboarding_data.dict(exclude_unset=True)
+        print(f"Received profile update data: {update_data}")
         
         # Separate lifestyle and preferences from the rest of the data
         lifestyle_data = current_user.lifestyle_data or {}
         preferences_data = current_user.preferences or {}
         
         for key, value in update_data.items():
+            print(f"Processing field: {key} = {value}")
             if key in ['is_smoker', 'has_pets', 'drinking_habits', 'sleep_schedule', 'cleanliness', 'guest_preference', 'noise_level']:
                 lifestyle_data[key] = value
             elif key in ['interests', 'hobbies', 'music_preference', 'food_preference']:
@@ -120,10 +122,17 @@ async def update_onboarding_data(
                         approximate_birth_year = datetime.now().year - value
                         current_user.date_of_birth = datetime(approximate_birth_year, 1, 1)
             else:
-                setattr(current_user, key, value)
+                # Set direct user attributes
+                if hasattr(current_user, key):
+                    setattr(current_user, key, value)
+                else:
+                    print(f"Warning: Unknown field {key}")
                 
         current_user.lifestyle_data = lifestyle_data
         current_user.preferences = preferences_data
+        
+        print(f"Updated lifestyle_data: {lifestyle_data}")
+        print(f"Updated preferences: {preferences_data}")
         
         # Recalculate profile completion score with proper error handling
         score = 0
@@ -138,6 +147,7 @@ async def update_onboarding_data(
             if current_user.is_verified_email: score += 5
             if current_user.is_verified_phone: score += 5
             current_user.profile_completion_score = min(score, 100)
+            print(f"Calculated profile completion score: {score}")
         except Exception as e:
             # If profile completion calculation fails, set a default score
             print(f"Error calculating profile completion score: {e}")
@@ -147,11 +157,15 @@ async def update_onboarding_data(
         await db.commit()
         await db.refresh(current_user)
         
+        print(f"Successfully updated profile for user {current_user.id}")
         return current_user
         
     except Exception as e:
         await db.rollback()
+        import traceback
+        error_traceback = traceback.format_exc()
         print(f"Error updating onboarding data: {e}")
+        print(f"Full traceback: {error_traceback}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to update profile: {str(e)}"
@@ -258,13 +272,21 @@ async def get_current_user_listings(
     db: AsyncSession = Depends(get_db_session)
 ):
     """Get all listings for the current user"""
-    result = await db.execute(
-        select(Listing)
-        .where(Listing.user_id == current_user.id)
-        .where(Listing.status != "expired")  # Don't show deleted listings
-    )
-    listings = result.scalars().all()
-    return listings
+    try:
+        result = await db.execute(
+            select(Listing)
+            .where(Listing.user_id == current_user.id)
+            .where(Listing.status != "expired")  # Don't show deleted listings
+        )
+        listings = result.scalars().all()
+        print(f"Found {len(listings)} listings for user {current_user.id}")
+        return listings
+    except Exception as e:
+        print(f"Error fetching user listings: {e}")
+        import traceback
+        print(f"Full traceback: {traceback.format_exc()}")
+        # Return empty list instead of 500 error
+        return []
 
 @router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_current_user_account(
