@@ -59,7 +59,20 @@ async def get_current_user_profile(
     current_user: User = Depends(get_current_user)
 ):
     """Get current user's full profile"""
-    return current_user
+    try:
+        print(f"Fetching profile for user: {current_user.id}")
+        print(f"User email: {current_user.email}")
+        print(f"User active: {current_user.is_active}")
+        return current_user
+    except Exception as e:
+        import traceback
+        error_traceback = traceback.format_exc()
+        print(f"Error fetching user profile: {e}")
+        print(f"Full traceback: {error_traceback}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch user profile: {str(e)}"
+        )
 
 @router.put("/me", response_model=UserProfile)
 async def update_current_user_profile(

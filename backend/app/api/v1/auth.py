@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, text
 from datetime import timedelta
 
 from app.models.database import get_db_session
@@ -17,6 +17,36 @@ from app.core.config import settings
 from app.services import notification_service
 
 router = APIRouter()
+
+@router.get("/health")
+async def health_check(db: AsyncSession = Depends(get_db_session)):
+    """Health check endpoint to test database connectivity"""
+    try:
+        # Test database connection
+        result = await db.execute(text("SELECT 1"))
+        db_status = "connected" if result.scalar() == 1 else "error"
+        
+        # Test user table exists
+        try:
+            user_count = await db.execute(text("SELECT COUNT(*) FROM users"))
+            user_table_status = f"exists ({user_count.scalar()} users)"
+        except Exception as e:
+            user_table_status = f"error: {str(e)}"
+        
+        return {
+            "status": "healthy",
+            "database": db_status,
+            "user_table": user_table_status,
+            "environment": settings.environment,
+            "debug": settings.debug
+        }
+    except Exception as e:
+        import traceback
+        return {
+            "status": "unhealthy",
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }
 
 @router.post("/register", response_model=Token, status_code=status.HTTP_201_CREATED)
 async def register(
@@ -112,32 +142,85 @@ async def login(
     db: AsyncSession = Depends(get_db_session)
 ):
     """Login user and return JWT tokens"""
-    # Get user by email
-    result = await db.execute(select(User).where(User.email == user_credentials.email))
-    user = result.scalar_one_or_none()
-    
-    if not user or not verify_password(user_credentials.password, user.password_hash):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
-            headers={"WWW-Authenticate": "Bearer"},
+    try:
+        print(f"Login attempt for email: {user_credentials.email}")
+        
+        # Get user by email
+        try:
+            result = await db.execute(select(User).where(User.email == user_credentials.email))
+            user = result.scalar_one_or_none()
+            print(f"User found: {user is not None}")
+        except Exception as e:
+            print(f"Database query failed: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Database connection error"
+            )
+        
+        if not user:
+            print(f"User not found for email: {user_credentials.email}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect email or password",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        # Verify password
+        try:
+            password_valid = verify_password(user_credentials.password, user.password_hash)
+            print(f"Password valid: {password_valid}")
+        except Exception as e:
+            print(f"Password verification failed: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Authentication system error"
+            )
+        
+        if not password_valid:
+            print(f"Invalid password for email: {user_credentials.email}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect email or password",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        if not user.is_active:
+            print(f"Inactive account for email: {user_credentials.email}")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Account is deactivated"
+            )
+        
+        # Create tokens
+        try:
+            access_token = create_access_token(data={"sub": str(user.id)})
+            refresh_token = create_refresh_token(data={"sub": str(user.id)})
+            print(f"Tokens created successfully for user: {user.id}")
+        except Exception as e:
+            print(f"Token creation failed: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Token generation error"
+            )
+        
+        return Token(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            expires_in=settings.jwt_expiration_hours * 3600
         )
-    
-    if not user.is_active:
+        
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
+    except Exception as e:
+        import traceback
+        error_traceback = traceback.format_exc()
+        print(f"Unexpected error in login: {e}")
+        print(f"Full traceback: {error_traceback}")
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Account is deactivated"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Login system error: {str(e)}"
         )
-    
-    # Create tokens
-    access_token = create_access_token(data={"sub": str(user.id)})
-    refresh_token = create_refresh_token(data={"sub": str(user.id)})
-    
-    return Token(
-        access_token=access_token,
-        refresh_token=refresh_token,
-        expires_in=settings.jwt_expiration_hours * 3600
-    )
 
 @router.post("/refresh", response_model=Token)
 async def refresh_token(

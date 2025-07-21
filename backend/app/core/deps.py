@@ -16,35 +16,85 @@ async def get_current_user(
     db: AsyncSession = Depends(get_db_session)
 ) -> User:
     """Get current authenticated user"""
-    token = credentials.credentials
-    payload = verify_token(token)
-    
-    user_id: str = payload.get("sub")
-    if user_id is None:
+    try:
+        print(f"Starting authentication with credentials present: {credentials is not None}")
+        
+        if not credentials:
+            print("No credentials provided")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="No authentication credentials provided",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        token = credentials.credentials
+        print(f"Token length: {len(token) if token else 0}")
+        
+        # Verify token
+        try:
+            payload = verify_token(token)
+            print(f"Token verified successfully, payload keys: {list(payload.keys())}")
+        except Exception as e:
+            print(f"Token verification failed: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Could not validate credentials",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            print("No user ID in token payload")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Could not validate credentials",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        print(f"Looking up user with ID: {user_id}")
+        
+        # Get user from database
+        try:
+            result = await db.execute(select(User).where(User.id == user_id))
+            user = result.scalar_one_or_none()
+            print(f"User found in database: {user is not None}")
+        except Exception as e:
+            print(f"Database query failed in get_current_user: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Database error during authentication"
+            )
+        
+        if user is None:
+            print(f"User not found in database for ID: {user_id}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not found",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        if not user.is_active:
+            print(f"User {user_id} is inactive")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Inactive user"
+            )
+        
+        print(f"Authentication successful for user: {user.email}")
+        return user
+        
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
+    except Exception as e:
+        import traceback
+        error_traceback = traceback.format_exc()
+        print(f"Unexpected error in get_current_user: {e}")
+        print(f"Full traceback: {error_traceback}")
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
-            headers={"WWW-Authenticate": "Bearer"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Authentication system error: {str(e)}"
         )
-    
-    # Get user from database
-    result = await db.execute(select(User).where(User.id == user_id))
-    user = result.scalar_one_or_none()
-    
-    if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    
-    if not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Inactive user"
-        )
-    
-    return user
 
 async def get_current_active_user(
     current_user: User = Depends(get_current_user)
