@@ -45,9 +45,24 @@ async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
 async def init_db():
     """Initialize database tables"""
     async with engine.begin() as conn:
-        # Enable PostGIS and pgvector extensions
-        await conn.execute(text("CREATE EXTENSION IF NOT EXISTS postgis;"))
-        await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
+        # Try to enable PostGIS and pgvector extensions, but don't fail if they're not available
+        # This allows the app to work on managed databases like Render that don't support these extensions
+        try:
+            await conn.execute(text("CREATE EXTENSION IF NOT EXISTS postgis;"))
+            print("PostGIS extension enabled")
+        except Exception as e:
+            print(f"PostGIS extension not available (likely on managed database): {e}")
+        
+        try:
+            await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
+            print("pgvector extension enabled")
+        except Exception as e:
+            print(f"pgvector extension not available (likely on managed database): {e}")
         
         # Create all tables
-        await conn.run_sync(Base.metadata.create_all) 
+        try:
+            await conn.run_sync(Base.metadata.create_all)
+            print("Database tables created successfully")
+        except Exception as e:
+            print(f"Error creating database tables: {e}")
+            raise 

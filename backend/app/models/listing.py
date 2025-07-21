@@ -2,7 +2,8 @@ from sqlalchemy import Column, String, Integer, DateTime, Enum, JSON, Boolean, T
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
-from geoalchemy2 import Geography
+# Temporarily remove geoalchemy2 import to work on managed databases without PostGIS
+# from geoalchemy2 import Geography
 from .database import Base
 import uuid
 import enum
@@ -31,8 +32,8 @@ class Listing(Base):
     title = Column(String(200), nullable=False)
     description = Column(Text, nullable=True)
     
-    # Location (PostGIS Geography column)
-    location = Column(Geography(geometry_type="POINT", srid=4326), nullable=True)
+    # Location (using simple string instead of PostGIS Geography for compatibility)
+    location = Column(String(500), nullable=True)  # Store as "lat,lon" or address string
     address = Column(String(500), nullable=True)
     city = Column(String(100), nullable=True)
     state = Column(String(50), nullable=True)

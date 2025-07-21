@@ -5,7 +5,8 @@ from sqlalchemy.orm import selectinload
 from typing import List, Optional
 from uuid import UUID
 from datetime import datetime, timezone
-from geoalchemy2.functions import ST_DWithin
+# Remove geoalchemy2 import to work without PostGIS
+# from geoalchemy2.functions import ST_DWithin
 import traceback
 
 from app.models.database import get_db_session
@@ -112,7 +113,7 @@ async def search_listings(
     skip: int = 0,
     limit: int = 20
 ):
-    """Search for listings with location-based filtering"""
+    """Search for listings with basic filtering (without PostGIS for compatibility)"""
     query = (
         select(Listing)
         .where(Listing.status == ListingStatus.ACTIVE)
@@ -121,9 +122,10 @@ async def search_listings(
         .limit(limit)
     )
     
-    if lat is not None and lon is not None:
-        point = f"POINT({lon} {lat})"
-        query = query.where(ST_DWithin(Listing.location, point, radius))
+    # Note: Location-based search disabled without PostGIS
+    # if lat is not None and lon is not None:
+    #     point = f"POINT({lon} {lat})"
+    #     query = query.where(ST_DWithin(Listing.location, point, radius))
         
     if listing_type:
         query = query.where(Listing.listing_type == listing_type)
