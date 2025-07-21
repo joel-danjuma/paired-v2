@@ -10,29 +10,13 @@ import { Pencil, Home, Calendar, TrendingUp } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
-// Mock listings data - this would typically come from API
-const mockListings = [
-  {
-    id: '101',
-    title: 'Sunny Room in Downtown Apartment',
-    location: 'Downtown, Lagos',
-    rent: 120000,
-    moveInDate: '2023-07-15',
-    isPremium: true
-  },
-  {
-    id: '102',
-    title: 'Private Room with Bath in Modern House',
-    location: 'Lekki, Lagos',
-    rent: 150000,
-    moveInDate: '2023-08-01',
-    isPremium: false
-  }
-];
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1";
 
 const ProfilePage = () => {
   const { user, token } = useAuth();
   const [userProfile, setUserProfile] = useState(null);
+  const [userListings, setUserListings] = useState([]);
+  const [isLoadingListings, setIsLoadingListings] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -43,7 +27,7 @@ const ProfilePage = () => {
       }
 
       try {
-        const response = await fetch('/api/v1/users/me', {
+        const response = await fetch(`${API_BASE_URL}/users/me`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -60,7 +44,32 @@ const ProfilePage = () => {
       }
     };
 
+    const fetchUserListings = async () => {
+      if (!token) {
+        setIsLoadingListings(false);
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/users/me/listings`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (response.ok) {
+          const listings = await response.json();
+          setUserListings(listings);
+        }
+      } catch (error) {
+        console.error('Failed to fetch user listings:', error);
+      } finally {
+        setIsLoadingListings(false);
+      }
+    };
+
     fetchUserProfile();
+    fetchUserListings();
   }, [token]);
 
   console.log('ProfilePage rendering for user:', user?.name);
@@ -234,41 +243,48 @@ const ProfilePage = () => {
                       </Button>
                     </CardHeader>
                     <CardContent>
-                      {mockListings.length > 0 ? (
+                      {isLoadingListings ? (
+                        <div className="flex items-center justify-center py-8">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                          <span className="ml-2">Loading listings...</span>
+                        </div>
+                      ) : userListings.length > 0 ? (
                         <div className="space-y-4">
-                          {mockListings.map(listing => (
+                          {userListings.map(listing => (
                             <div key={listing.id} className="border rounded-lg p-4 flex flex-col md:flex-row justify-between">
                               <div>
                                 <div className="flex items-center mb-2">
                                   <h3 className="font-medium">{listing.title}</h3>
-                                  {listing.isPremium && (
-                                    <Badge className="ml-2 bg-gradient-to-r from-amber-500 to-yellow-500">
-                                      Premium
-                                    </Badge>
-                                  )}
+                                  <Badge className="ml-2 capitalize" variant="outline">
+                                    {listing.listing_type}
+                                  </Badge>
                                 </div>
-                                <p className="text-sm text-gray-500">{listing.location}</p>
-                                <p className="text-sm text-gray-500 flex items-center mt-1">
-                                  <Calendar className="w-4 h-4 mr-1" /> 
-                                  Available from {new Date(listing.moveInDate).toLocaleDateString()}
-                                </p>
+                                <p className="text-sm text-gray-500">{listing.address || listing.city}</p>
+                                {listing.available_from && (
+                                  <p className="text-sm text-gray-500 flex items-center mt-1">
+                                    <Calendar className="w-4 h-4 mr-1" /> 
+                                    Available from {new Date(listing.available_from).toLocaleDateString()}
+                                  </p>
+                                )}
                               </div>
                               <div className="mt-4 md:mt-0 flex flex-col items-end">
-                                <p className="text-lg font-bold">₦{listing.rent.toLocaleString()}/mo</p>
+                                {(listing.price_min || listing.price_max) && (
+                                  <p className="text-lg font-bold">
+                                    ₦{(listing.price_min || listing.price_max).toLocaleString()}/mo
+                                  </p>
+                                )}
                                 <div className="mt-2 space-x-2">
                                   <Button asChild variant="outline" size="sm">
                                     <Link to={`/edit-listing/${listing.id}`}>
                                       Edit
                                     </Link>
                                   </Button>
-                                  {!listing.isPremium && (
-                                    <Button asChild size="sm">
-                                      <Link to={`/boost-listing/${listing.id}`}>
-                                        <TrendingUp className="w-4 h-4 mr-1" />
-                                        Boost
-                                      </Link>
-                                    </Button>
-                                  )}
+                                  <Button asChild size="sm">
+                                    <Link to={`/boost-listing/${listing.id}`}>
+                                      <TrendingUp className="w-4 h-4 mr-1" />
+                                      Boost
+                                    </Link>
+                                  </Button>
                                 </div>
                               </div>
                             </div>

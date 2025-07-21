@@ -9,6 +9,8 @@ import { Plus, Home, Edit, Eye, TrendingUp, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "@/components/ui/sonner";
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1";
+
 const MyListingsPage = () => {
   const { user, token } = useAuth();
   const [userListings, setUserListings] = useState([]);
@@ -49,7 +51,7 @@ const MyListingsPage = () => {
       }
 
       try {
-        const response = await fetch('/api/v1/users/me/listings', {
+        const response = await fetch(`${API_BASE_URL}/users/me/listings`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
