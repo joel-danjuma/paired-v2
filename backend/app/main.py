@@ -64,9 +64,16 @@ app.add_middleware(
     allowed_hosts=settings.trusted_hosts
 )
 
-# Add a simple root health check that doesn't require database
-@app.get("/")
-async def root_health_check():
+# Include API routes FIRST (these take precedence)
+app.include_router(api_router, prefix="/api/v1")
+
+# Add health check endpoints under /api/v1 to avoid conflicts
+@app.get("/api/v1/health")
+async def health_check():
+    return {"status": "healthy", "service": "paired-backend"}
+
+@app.get("/api/v1/status")
+async def api_status():
     return {
         "status": "api_running",
         "message": "Paired Backend API is running",
@@ -74,30 +81,20 @@ async def root_health_check():
         "debug": settings.debug
     }
 
-# Include API routes
-app.include_router(api_router, prefix="/api/v1")
-
-# Add health check endpoint for deployment monitoring
-@app.get("/api/v1/health")
-async def health_check():
-    return {"status": "healthy", "service": "paired-backend"}
-
-# Serve static files for frontend (production only)
-if settings.environment == "production" and os.path.exists(STATIC_DIR):
-    app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static")
-elif os.path.exists(STATIC_DIR):
-    print(f"Static directory found: {STATIC_DIR}")
+# Serve static files for frontend (this should be AFTER API routes)
+if os.path.exists(STATIC_DIR):
+    print(f"Mounting static files from: {STATIC_DIR}")
     app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static")
 else:
     print(f"Static directory not found: {STATIC_DIR}")
-
-# Catch-all route for SPA frontend routing (must be last)
-@app.get("/{path:path}")
-async def serve_frontend(path: str):
-    """Serve frontend application for client-side routing"""
-    if settings.environment == "production":
-        static_file = os.path.join(STATIC_DIR, "index.html")
-        if os.path.exists(static_file):
-            return FileResponse(static_file)
     
-    raise HTTPException(status_code=404, detail="Not found") 
+    # Fallback root endpoint if no static files
+    @app.get("/")
+    async def root_fallback():
+        return {
+            "message": "Paired Backend API - Frontend not found",
+            "api_docs": "/docs",
+            "api_health": "/api/v1/health",
+            "static_dir": STATIC_DIR,
+            "static_exists": False
+        } 
