@@ -23,50 +23,74 @@ async def get_match_recommendations(
 ):
     """Get personalized match recommendations using hybrid approach."""
     
-    # Get collaborative filtering recommendations
-    collab_recs = await behavior_tracking_service.get_collaborative_recommendations(
-        str(current_user.id), method="hybrid", n_recommendations=limit
-    )
-    
-    # If we have collaborative filtering recommendations, use them
-    if collab_recs:
-        recommendations = []
+    try:
+        # Get collaborative filtering recommendations
+        collab_recs = None
+        try:
+            collab_recs = await behavior_tracking_service.get_collaborative_recommendations(
+                str(current_user.id), method="hybrid", n_recommendations=limit
+            )
+        except Exception as e:
+            print(f"Collaborative filtering failed: {e}")
+            collab_recs = None
         
-        for rec in collab_recs:
-            # Get user data
-            result = await db.execute(select(User).where(User.id == rec["user_id"]))
-            user = result.scalar_one_or_none()
+        # If we have collaborative filtering recommendations, use them
+        if collab_recs:
+            recommendations = []
             
-            if user and user.is_active:
+            for rec in collab_recs:
+                try:
+                    # Get user data
+                    result = await db.execute(select(User).where(User.id == rec["user_id"]))
+                    user = result.scalar_one_or_none()
+                    
+                    if user and user.is_active:
+                        recommendations.append(
+                            MatchRecommendation(
+                                user=UserPublicProfile.from_user(user),
+                                compatibility_score=rec["score"]
+                            )
+                        )
+                except Exception as e:
+                    print(f"Error processing recommendation: {e}")
+                    continue
+            
+            if recommendations:
+                return recommendations
+        
+        # Fallback to traditional ML/rule-based matching
+        # Get all users for now (in production, this would be optimized)
+        result = await db.execute(select(User).limit(100))
+        potential_matches = result.scalars().all()
+        
+        # Calculate compatibility scores
+        try:
+            matches = matching_service.find_matches_for_user(current_user, potential_matches)
+        except Exception as e:
+            print(f"Matching service failed: {e}")
+            # Return empty list if matching fails
+            return []
+        
+        # Convert to response model
+        recommendations = []
+        for match in matches[:limit]:
+            try:
                 recommendations.append(
                     MatchRecommendation(
-                        user=UserPublicProfile.from_user(user),
-                        compatibility_score=rec["score"]
+                        user=UserPublicProfile.from_user(match["user"]),
+                        compatibility_score=match["compatibility_score"]
                     )
                 )
+            except Exception as e:
+                print(f"Error creating match recommendation: {e}")
+                continue
+            
+        return recommendations
         
-        if recommendations:
-            return recommendations
-    
-    # Fallback to traditional ML/rule-based matching
-    # Get all users for now (in production, this would be optimized)
-    result = await db.execute(select(User).limit(100))
-    potential_matches = result.scalars().all()
-    
-    # Calculate compatibility scores
-    matches = matching_service.find_matches_for_user(current_user, potential_matches)
-    
-    # Convert to response model
-    recommendations = []
-    for match in matches[:limit]:
-        recommendations.append(
-            MatchRecommendation(
-                user=UserPublicProfile.from_user(match["user"]),
-                compatibility_score=match["compatibility_score"]
-            )
-        )
-        
-    return recommendations
+    except Exception as e:
+        print(f"Error in get_match_recommendations: {e}")
+        # Return empty list instead of 500 error
+        return []
 
 @router.get("/search", response_model=List[MatchRecommendation])
 async def search_matches(

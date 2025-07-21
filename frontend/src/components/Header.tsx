@@ -66,7 +66,7 @@ const Header = () => {
                     location.pathname === "/create-listing" ? "text-paired-600" : "text-gray-600 hover:text-paired-600"
                   }`}
                 >
-                  Post Request
+                  Create Listing
                 </Link>
               </>
             ) : user?.user_type === 'provider' ? (

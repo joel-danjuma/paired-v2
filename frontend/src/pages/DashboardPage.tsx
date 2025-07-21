@@ -90,7 +90,7 @@ const DashboardPage = () => {
                     <Link to="/create-listing">
                       <Button className="bg-green-600 hover:bg-green-700">
                         <PlusCircle className="mr-2 h-4 w-4" />
-                        Post Request
+                        Create Listing
                       </Button>
                     </Link>
                   </CardContent>

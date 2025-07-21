@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, WebSocket, WebSocketDisconnect
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
 from typing import List
 from uuid import UUID, uuid4
@@ -115,62 +115,72 @@ async def get_user_conversations(
     db: AsyncSession = Depends(get_db_session)
 ):
     """Get all conversations for the current user formatted as contacts"""
-    result = await db.execute(
-        select(Conversation)
-        .where(Conversation.participants.contains([current_user.id]))
-        .where(Conversation.is_active == True)
-        .order_by(Conversation.last_message_at.desc().nullslast())
-    )
-    conversations = result.scalars().all()
-    
-    contacts = []
-    for conversation in conversations:
-        # Get the other participant (not the current user)
-        other_participant_ids = [pid for pid in conversation.participants if pid != current_user.id]
-        if not other_participant_ids:
-            continue
+    try:
+        result = await db.execute(
+            select(Conversation)
+            .where(Conversation.participants.contains([current_user.id]))
+            .where(Conversation.is_active == True)
+            .order_by(Conversation.last_message_at.desc().nullslast())
+        )
+        conversations = result.scalars().all()
+        
+        # For now, return empty list if no conversations
+        if not conversations:
+            return []
+        
+        contacts = []
+        for conversation in conversations:
+            # Get the other participant (not the current user)
+            other_participant_ids = [pid for pid in conversation.participants if pid != current_user.id]
+            if not other_participant_ids:
+                continue
+                
+            other_participant_id = other_participant_ids[0]
             
-        other_participant_id = other_participant_ids[0]
-        
-        # Get other participant's info
-        user_result = await db.execute(
-            select(User).where(User.id == other_participant_id)
-        )
-        other_user = user_result.scalar_one_or_none()
-        
-        if not other_user:
-            continue
+            # Get other participant's info
+            user_result = await db.execute(
+                select(User).where(User.id == other_participant_id)
+            )
+            other_user = user_result.scalar_one_or_none()
             
-        # Get last message
-        last_message_result = await db.execute(
-            select(Message)
-            .where(Message.conversation_id == conversation.id)
-            .order_by(Message.created_at.desc())
-            .limit(1)
-        )
-        last_message = last_message_result.scalar_one_or_none()
+            if not other_user:
+                continue
+                
+            # Get last message
+            last_message_result = await db.execute(
+                select(Message)
+                .where(Message.conversation_id == conversation.id)
+                .order_by(Message.created_at.desc())
+                .limit(1)
+            )
+            last_message = last_message_result.scalar_one_or_none()
+            
+            # Count unread messages (messages not from current user that are unread)
+            unread_result = await db.execute(
+                select(Message)
+                .where(Message.conversation_id == conversation.id)
+                .where(Message.sender_id != current_user.id)
+                .where(Message.is_read == False)
+            )
+            unread_count = len(unread_result.scalars().all())
+            
+            # Create contact info
+            contact = ContactInfo(
+                id=str(conversation.id),
+                name=f"{other_user.first_name or ''} {other_user.last_name or ''}".strip() or "Unknown User",
+                avatar=other_user.profile_image_url,
+                lastMessage=last_message.content if last_message else None,
+                lastMessageTime=last_message.created_at if last_message else None,
+                unread=unread_count
+            )
+            contacts.append(contact)
         
-        # Count unread messages (messages not from current user that are unread)
-        unread_result = await db.execute(
-            select(Message)
-            .where(Message.conversation_id == conversation.id)
-            .where(Message.sender_id != current_user.id)
-            .where(Message.is_read == False)
-        )
-        unread_count = len(unread_result.scalars().all())
+        return contacts
         
-        # Create contact info
-        contact = ContactInfo(
-            id=str(conversation.id),
-            name=f"{other_user.first_name or ''} {other_user.last_name or ''}".strip() or "Unknown User",
-            avatar=other_user.profile_image_url,
-            lastMessage=last_message.content if last_message else None,
-            lastMessageTime=last_message.created_at if last_message else None,
-            unread=unread_count
-        )
-        contacts.append(contact)
-    
-    return contacts
+    except Exception as e:
+        print(f"Error fetching conversations: {e}")
+        # Return empty list instead of error to prevent frontend crashes
+        return []
 
 @router.get("/{conversation_id}", response_model=ConversationWithMessages)
 async def get_conversation_with_messages(
@@ -272,3 +282,39 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str):
             await manager.send_personal_message(f"Echo: {data}", user_id)
     except WebSocketDisconnect:
         manager.disconnect(user_id) 
+
+@router.get("/debug/tables")
+async def debug_database_tables(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db_session)
+):
+    """Debug endpoint to check database table status"""
+    try:
+        # Check if conversations table exists and count records
+        conv_result = await db.execute(select(func.count(Conversation.id)))
+        conv_count = conv_result.scalar()
+        
+        # Check if messages table exists and count records  
+        msg_result = await db.execute(select(func.count(Message.id)))
+        msg_count = msg_result.scalar()
+        
+        # Check if users table exists and count records
+        user_result = await db.execute(select(func.count(User.id)))
+        user_count = user_result.scalar()
+        
+        return {
+            "status": "success",
+            "tables": {
+                "conversations": {"exists": True, "count": conv_count},
+                "messages": {"exists": True, "count": msg_count},
+                "users": {"exists": True, "count": user_count}
+            },
+            "current_user_id": str(current_user.id)
+        }
+        
+    except Exception as e:
+        return {
+            "status": "error",
+            "error": str(e),
+            "message": "Database tables may not exist or there's a connection issue"
+        } 
