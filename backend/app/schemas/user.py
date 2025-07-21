@@ -16,6 +16,11 @@ class UserBase(BaseModel):
 
 class UserProfile(UserBase):
     id: UUID
+    bio: Optional[str] = None
+    date_of_birth: Optional[datetime] = None
+    preferences: Optional[Dict] = None
+    lifestyle_data: Optional[Dict] = None
+    phone: Optional[str] = None
     is_active: bool
     is_verified_email: bool
     is_verified_phone: bool
@@ -23,7 +28,8 @@ class UserProfile(UserBase):
     is_background_checked: bool
     profile_completion_score: int
     created_at: datetime
-    last_active: Optional[datetime]
+    updated_at: Optional[datetime] = None
+    last_active: Optional[datetime] = None
     
     class Config:
         from_attributes = True

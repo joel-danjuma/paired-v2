@@ -63,6 +63,10 @@ async def get_current_user_profile(
         print(f"Fetching profile for user: {current_user.id}")
         print(f"User email: {current_user.email}")
         print(f"User active: {current_user.is_active}")
+        print(f"User bio: {current_user.bio}")
+        print(f"User lifestyle_data: {current_user.lifestyle_data}")
+        print(f"User preferences: {current_user.preferences}")
+        print(f"User date_of_birth: {current_user.date_of_birth}")
         return current_user
     except Exception as e:
         import traceback
