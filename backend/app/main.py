@@ -16,7 +16,6 @@ if settings.database_url and settings.database_url.startswith("postgresql://"):
     settings.database_url = settings.database_url.replace("postgresql://", "postgresql+asyncpg://", 1)
 
 # Define the path for static files relative to the project root
-# This makes it work consistently whether run locally or in production
 if settings.environment == "production":
     STATIC_DIR = "/app/static"
 else:
@@ -26,8 +25,13 @@ else:
 async def lifespan(app: FastAPI):
     # Startup
     print("Starting up Paired Backend API...")
-    await init_db()
-    print("Database initialized successfully")
+    try:
+        await init_db()
+        print("Database initialized successfully")
+    except Exception as e:
+        print(f"Database initialization failed: {e}")
+        # Don't fail startup completely - let app start for debugging
+        print("Continuing startup without database...")
     yield
     # Shutdown
     print("Shutting down Paired Backend API...")
@@ -60,30 +64,40 @@ app.add_middleware(
     allowed_hosts=settings.trusted_hosts
 )
 
-# Include API routes FIRST - this ensures they take priority
+# Add a simple root health check that doesn't require database
+@app.get("/")
+async def root_health_check():
+    return {
+        "status": "api_running",
+        "message": "Paired Backend API is running",
+        "environment": settings.environment,
+        "debug": settings.debug
+    }
+
+# Include API routes
 app.include_router(api_router, prefix="/api/v1")
 
-# Add a health check endpoint for deployment monitoring
+# Add health check endpoint for deployment monitoring
 @app.get("/api/v1/health")
 async def health_check():
     return {"status": "healthy", "service": "paired-backend"}
 
-# Debug endpoint to check static files configuration
-@app.get("/api/v1/debug/static")
-async def debug_static():
-    return {
-        "static_dir": STATIC_DIR,
-        "static_dir_exists": os.path.exists(STATIC_DIR),
-        "environment": settings.environment,
-        "debug": settings.debug,
-        "files_in_static_dir": os.listdir(STATIC_DIR) if os.path.exists(STATIC_DIR) else []
-    }
-
-# Mount static files BEFORE catch-all routes
-if os.path.exists(STATIC_DIR):
+# Serve static files for frontend (production only)
+if settings.environment == "production" and os.path.exists(STATIC_DIR):
+    app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static")
+elif os.path.exists(STATIC_DIR):
+    print(f"Static directory found: {STATIC_DIR}")
     app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static")
 else:
-    # Fallback for development
-    @app.get("/")
-    async def root():
-        return {"message": "Paired Backend API", "docs": "/docs", "health": "/api/v1/health"} 
+    print(f"Static directory not found: {STATIC_DIR}")
+
+# Catch-all route for SPA frontend routing (must be last)
+@app.get("/{path:path}")
+async def serve_frontend(path: str):
+    """Serve frontend application for client-side routing"""
+    if settings.environment == "production":
+        static_file = os.path.join(STATIC_DIR, "index.html")
+        if os.path.exists(static_file):
+            return FileResponse(static_file)
+    
+    raise HTTPException(status_code=404, detail="Not found") 

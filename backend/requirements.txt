@@ -9,9 +9,9 @@ asyncpg==0.29.0
 sqlalchemy[asyncio]==2.0.23
 alembic==1.13.1
 
-# PostgreSQL extensions
-pgvector==0.2.4
-geoalchemy2==0.14.2
+# PostgreSQL extensions - REMOVED to fix import issues on managed databases
+# pgvector==0.2.4
+# geoalchemy2==0.14.2
 
 # Authentication and Security
 python-jose[cryptography]==3.3.0

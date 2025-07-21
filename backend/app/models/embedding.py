@@ -2,7 +2,7 @@ from sqlalchemy import Column, String, Integer, DateTime, Enum, JSON, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
-# Temporarily remove pgvector import to work on managed databases
+# Removed pgvector import - not available on managed databases
 # from pgvector.sqlalchemy import Vector
 from .database import Base
 import uuid
@@ -18,13 +18,13 @@ class UserEmbedding(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     
-    # Vector embedding (stored as JSON array instead of Vector for compatibility)
-    embedding = Column(JSON, nullable=False)  # Store as JSON array instead of pgvector
+    # Vector embedding stored as JSON array (pgvector not available on managed DB)
+    embedding = Column(JSON, nullable=False)
     embedding_type = Column(Enum(EmbeddingType), nullable=False, default=EmbeddingType.USER)
     
     # Metadata
     model_version = Column(String(50), nullable=True)
-    source_data_hash = Column(String(64), nullable=True)  # To track when to update
+    source_data_hash = Column(String(64), nullable=True)
     
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -42,19 +42,19 @@ class ListingEmbedding(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     listing_id = Column(UUID(as_uuid=True), ForeignKey("listings.id"), nullable=False)
     
-    # Vector embedding (stored as JSON array instead of Vector for compatibility)
-    embedding = Column(JSON, nullable=False)  # Store as JSON array instead of pgvector
+    # Vector embedding stored as JSON array (pgvector not available on managed DB)
+    embedding = Column(JSON, nullable=False)
     embedding_type = Column(Enum(EmbeddingType), nullable=False, default=EmbeddingType.LISTING)
     
     # Metadata
     model_version = Column(String(50), nullable=True)
-    source_data_hash = Column(String(64), nullable=True)  # To track when to update
+    source_data_hash = Column(String(64), nullable=True)
     
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
-    # Relationships
+    # Relationships - temporarily disabled
     # listing = relationship("Listing", back_populates="embeddings")
 
     def __repr__(self):
