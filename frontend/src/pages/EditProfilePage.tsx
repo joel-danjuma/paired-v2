@@ -29,6 +29,8 @@ const EditProfilePage = () => {
     drinkingHabits: user?.lifestyle_data?.drinking_habits || '',
     sleepSchedule: user?.lifestyle_data?.sleep_schedule || '',
     cleanliness: user?.lifestyle_data?.cleanliness || '',
+    guestPreference: user?.lifestyle_data?.guest_preference || '',
+    noiseLevel: user?.lifestyle_data?.noise_level || '',
     interests: user?.preferences?.interests || '',
     hobbies: user?.preferences?.hobbies || '',
     musicPreference: user?.preferences?.music_preference || '',
@@ -66,6 +68,8 @@ const EditProfilePage = () => {
         drinking_habits: formData.drinkingHabits || null,
         sleep_schedule: formData.sleepSchedule || null,
         cleanliness: formData.cleanliness || null,
+        guest_preference: formData.guestPreference || null,
+        noise_level: formData.noiseLevel || null,
         interests: formData.interests || null,
         hobbies: formData.hobbies || null,
         // Fix snake_case field names
@@ -264,6 +268,41 @@ const EditProfilePage = () => {
                     </SelectContent>
                   </Select>
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="guestPreference">Guest Preference</Label>
+                  <Select 
+                    value={formData.guestPreference} 
+                    onValueChange={(value) => handleSelectChange('guestPreference', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select guest preference" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="never">Never</SelectItem>
+                      <SelectItem value="rarely">Rarely</SelectItem>
+                      <SelectItem value="occasionally">Occasionally</SelectItem>
+                      <SelectItem value="frequently">Frequently</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="noiseLevel">Noise Level Preference</Label>
+                <Select 
+                  value={formData.noiseLevel} 
+                  onValueChange={(value) => handleSelectChange('noiseLevel', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select noise level preference" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="very-quiet">Very quiet</SelectItem>
+                    <SelectItem value="quiet">Quiet</SelectItem>
+                    <SelectItem value="moderate">Moderate</SelectItem>
+                    <SelectItem value="lively">Lively</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               
               <div className="space-y-2">

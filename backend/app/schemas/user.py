@@ -44,6 +44,8 @@ class UserUpdate(BaseModel):
     phone: Optional[str] = Field(None, max_length=20)
 
 class OnboardingData(BaseModel):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
     bio: Optional[str] = None
     occupation: Optional[str] = None
     age: Optional[int] = None

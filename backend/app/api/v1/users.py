@@ -138,8 +138,17 @@ async def update_onboarding_data(
                         from datetime import datetime, timedelta
                         approximate_birth_year = datetime.now().year - value
                         current_user.date_of_birth = datetime(approximate_birth_year, 1, 1)
-            else:
+            elif key == 'occupation':
+                # Store occupation in lifestyle_data
+                lifestyle_data['occupation'] = value
+            elif key == 'gender':
+                # Store gender in lifestyle_data  
+                lifestyle_data['gender'] = value
+            elif key in ['first_name', 'last_name', 'bio']:
                 # Set direct user attributes
+                setattr(current_user, key, value)
+            else:
+                # Set other direct user attributes
                 if hasattr(current_user, key):
                     setattr(current_user, key, value)
                 else:
@@ -150,6 +159,9 @@ async def update_onboarding_data(
         
         print(f"Updated lifestyle_data: {lifestyle_data}")
         print(f"Updated preferences: {preferences_data}")
+        print(f"Current user first_name: {current_user.first_name}")
+        print(f"Current user last_name: {current_user.last_name}")
+        print(f"Current user bio: {current_user.bio}")
         
         # Recalculate profile completion score with proper error handling
         score = 0
@@ -171,9 +183,14 @@ async def update_onboarding_data(
             current_user.profile_completion_score = 50
 
         db.add(current_user)
+        print("Added user to session for commit")
         await db.commit()
+        print("Committed changes to database")
         await db.refresh(current_user)
         
+        print(f"After refresh - user bio: {current_user.bio}")
+        print(f"After refresh - user lifestyle_data: {current_user.lifestyle_data}")
+        print(f"After refresh - user preferences: {current_user.preferences}")
         print(f"Successfully updated profile for user {current_user.id}")
         return current_user
         
