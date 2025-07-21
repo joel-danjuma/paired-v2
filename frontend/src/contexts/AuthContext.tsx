@@ -9,8 +9,15 @@ type User = {
   user_type: string;
   first_name?: string;
   last_name?: string;
-  name?: string; // Added for new login logic
-  profilePic?: string; // Added for new login logic
+  name?: string; // Computed from first_name + last_name
+  profilePic?: string; // profile_image_url from backend
+  bio?: string;
+  profile_completion_score?: number;
+  is_verified_email?: boolean;
+  is_verified_phone?: boolean;
+  is_verified_identity?: boolean;
+  preferences?: any;
+  lifestyle_data?: any;
 };
 
 type AuthContextType = {
@@ -18,7 +25,7 @@ type AuthContextType = {
   isLoading: boolean;
   token: string | null;
   login: (email: string, password: string, fromRegistration?: boolean) => Promise<boolean>;
-  register: (name: string, email: string, password: string) => Promise<boolean>;
+  register: (name: string, email: string, password: string, userType: string) => Promise<boolean>;
   logout: () => void;
 };
 
@@ -46,18 +53,63 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const decoded: any = jwtDecode(storedToken);
         if (decoded.exp * 1000 > Date.now()) {
           setToken(storedToken);
-          // Fetch user profile based on token
-          // This part would be implemented with a /users/me endpoint
+          // Fetch user profile from backend
+          fetchUserProfile(storedToken);
         } else {
           localStorage.removeItem('pairedToken');
+          setIsLoading(false);
         }
       } catch (error) {
         console.error("Failed to decode token:", error);
         localStorage.removeItem('pairedToken');
+        setIsLoading(false);
       }
+    } else {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }, []);
+
+  const fetchUserProfile = async (token: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/users/me`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const userData = await response.json();
+        const fullName = `${userData.first_name || ''} ${userData.last_name || ''}`.trim();
+        
+        setUser({
+          id: userData.id,
+          email: userData.email,
+          name: fullName || userData.email, // Fallback to email if no name
+          user_type: userData.user_type,
+          first_name: userData.first_name,
+          last_name: userData.last_name,
+          profilePic: userData.profile_image_url,
+          bio: userData.bio,
+          profile_completion_score: userData.profile_completion_score,
+          is_verified_email: userData.is_verified_email,
+          is_verified_phone: userData.is_verified_phone,
+          is_verified_identity: userData.is_verified_identity,
+          preferences: userData.preferences,
+          lifestyle_data: userData.lifestyle_data
+        });
+      } else {
+        // Token is invalid, remove it
+        localStorage.removeItem('pairedToken');
+        setToken(null);
+      }
+    } catch (error) {
+      console.error("Failed to fetch user profile:", error);
+      localStorage.removeItem('pairedToken');
+      setToken(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const login = async (email: string, password: string, fromRegistration = false) => {
     setIsLoading(true);
@@ -83,19 +135,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       const data = await response.json();
-      const decoded: any = jwtDecode(data.access_token);
-      
-      const loggedInUser: User = {
-        id: decoded.sub,
-        email: email, // Email is not in token, but we have it
-        name: decoded.name, // Assuming name is in token
-        profilePic: decoded.picture, // Assuming picture is in token
-        user_type: 'seeker' // Placeholder
-      };
-
-      setUser(loggedInUser);
       setToken(data.access_token);
       localStorage.setItem('pairedToken', data.access_token);
+      
+      // Fetch full user profile from backend
+      await fetchUserProfile(data.access_token);
       if (!fromRegistration) {
         toast.success("Successfully logged in!");
       }
