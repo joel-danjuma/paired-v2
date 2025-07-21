@@ -14,6 +14,30 @@ from app.core.deps import get_current_user
 
 router = APIRouter()
 
+@router.get("/", response_model=List[ListingWithUser])
+async def get_listings(
+    db: AsyncSession = Depends(get_db_session),
+    skip: int = 0,
+    limit: int = 20,
+    listing_type: Optional[ListingType] = Query(None)
+):
+    """Get all active listings"""
+    query = (
+        select(Listing)
+        .where(Listing.status == ListingStatus.ACTIVE)
+        .options(selectinload(Listing.user))
+        .offset(skip)
+        .limit(limit)
+    )
+    
+    if listing_type:
+        query = query.where(Listing.listing_type == listing_type)
+        
+    result = await db.execute(query)
+    listings = result.scalars().all()
+    
+    return listings
+
 @router.post("/", response_model=ListingSchema, status_code=status.HTTP_201_CREATED)
 async def create_listing(
     listing_data: ListingCreate,

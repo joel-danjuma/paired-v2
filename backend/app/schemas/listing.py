@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 from typing import Optional, List, Dict, TYPE_CHECKING
 from uuid import UUID
 from datetime import datetime
@@ -18,6 +18,15 @@ class ListingBase(BaseModel):
     
     price_min: Optional[float] = Field(None, gt=0)
     price_max: Optional[float] = Field(None, gt=0)
+    
+    @validator('price_min', 'price_max', pre=True)
+    def validate_prices(cls, v):
+        if v is None:
+            return v
+        try:
+            return float(v)
+        except (ValueError, TypeError):
+            raise ValueError('Price must be a valid number')
     
     property_details: Optional[Dict] = None
     lifestyle_preferences: Optional[Dict] = None

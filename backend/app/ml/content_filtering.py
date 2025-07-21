@@ -149,7 +149,13 @@ class ContentBasedFiltering:
         
         # Preferences
         preferences = user.get('preferences', {})
-        features.append(preferences.get('budget', 1000) / 3000.0)  # Normalized budget
+        budget = preferences.get('budget', 1000)
+        # Ensure budget is numeric
+        try:
+            budget = float(budget) if budget is not None else 1000.0
+        except (ValueError, TypeError):
+            budget = 1000.0
+        features.append(budget / 3000.0)  # Normalized budget
         features.append(preferences.get('location_importance', 0.5))
         features.append(preferences.get('cleanliness_importance', 3) / 5.0)
         features.append(preferences.get('social_level', 3) / 5.0)
@@ -202,7 +208,13 @@ class ContentBasedFiltering:
         features = []
         
         # Price
-        features.append(listing.get('price', 1000) / 3000.0)  # Normalized price
+        price = listing.get('price', 1000)
+        # Ensure price is numeric
+        try:
+            price = float(price) if price is not None else 1000.0
+        except (ValueError, TypeError):
+            price = 1000.0
+        features.append(price / 3000.0)  # Normalized price
         
         # Location features (if available)
         latitude = listing.get('latitude', 0)

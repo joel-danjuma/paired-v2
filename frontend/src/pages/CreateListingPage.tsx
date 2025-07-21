@@ -27,6 +27,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Info, Upload, Plus, Check, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1";
 
@@ -244,7 +246,11 @@ const CreateListingPage = () => {
   };
 
   return (
-    <div className="container max-w-4xl py-8 mx-auto px-4">
+    <div className="flex flex-col min-h-screen">
+      <Header />
+      
+      <main className="flex-1">
+        <div className="container max-w-4xl py-8 mx-auto px-4">
       <div className="mb-8">
         <Button
           variant="outline"
@@ -953,6 +959,10 @@ const CreateListingPage = () => {
           </form>
         </Form>
       </Card>
+        </div>
+      </main>
+      
+      <Footer />
     </div>
   );
 };

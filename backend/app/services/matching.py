@@ -60,10 +60,17 @@ class MatchingService:
         budget1 = preferences1.get("budget")
         budget2 = preferences2.get("budget")
         if budget1 and budget2:
-            budget_diff = abs(budget1 - budget2)
-            budget_score = max(0, 1 - (budget_diff / 1000))  # Normalize
-            score += budget_score * 30
-            total_weight += 30
+            # Ensure budgets are numeric
+            try:
+                budget1 = float(budget1)
+                budget2 = float(budget2)
+                budget_diff = abs(budget1 - budget2)
+                budget_score = max(0, 1 - (budget_diff / 1000))  # Normalize
+                score += budget_score * 30
+                total_weight += 30
+            except (ValueError, TypeError):
+                # Skip budget scoring if values are not numeric
+                pass
             
         # Lifestyle habits (example weight: 20)
         lifestyle1 = user1.lifestyle_data or {}
@@ -148,9 +155,15 @@ class MatchingService:
         budget1 = preferences1.get("budget")
         budget2 = preferences2.get("budget")
         if budget1 and budget2:
-            budget_diff_ratio = abs(budget1 - budget2) / max(budget1, budget2)
-            if budget_diff_ratio > 0.5:  # More than 50% difference
-                return False
+            try:
+                budget1 = float(budget1)
+                budget2 = float(budget2)
+                budget_diff_ratio = abs(budget1 - budget2) / max(budget1, budget2)
+                if budget_diff_ratio > 0.5:  # More than 50% difference
+                    return False
+            except (ValueError, TypeError):
+                # Skip budget constraint if values are not numeric
+                pass
         
         # Deal breakers
         smoking1 = lifestyle1.get("is_smoker", False)
