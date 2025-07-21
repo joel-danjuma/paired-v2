@@ -17,22 +17,22 @@ const EditProfilePage = () => {
   const navigate = useNavigate();
   const { user, token } = useAuth();
   
-  // Initialize form with completely empty values - NO defaults
+  // Initialize form with current user data
   const [formData, setFormData] = useState({
     name: user?.name || '',
-    bio: '',
-    occupation: '',
-    age: '',
-    gender: '',
-    isSmoker: '',
-    hasPets: '',
-    drinkingHabits: '',
-    sleepSchedule: '',
-    cleanliness: '',
-    interests: '',
-    hobbies: '',
-    musicPreference: '',
-    foodPreference: ''
+    bio: user?.bio || '',
+    occupation: user?.lifestyle_data?.occupation || '',
+    age: user?.lifestyle_data?.age?.toString() || '',
+    gender: user?.lifestyle_data?.gender || '',
+    isSmoker: user?.lifestyle_data?.is_smoker?.toString() || '',
+    hasPets: user?.lifestyle_data?.has_pets?.toString() || '',
+    drinkingHabits: user?.lifestyle_data?.drinking_habits || '',
+    sleepSchedule: user?.lifestyle_data?.sleep_schedule || '',
+    cleanliness: user?.lifestyle_data?.cleanliness || '',
+    interests: user?.preferences?.interests || '',
+    hobbies: user?.preferences?.hobbies || '',
+    musicPreference: user?.preferences?.music_preference || '',
+    foodPreference: user?.preferences?.food_preference || ''
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -48,13 +48,40 @@ const EditProfilePage = () => {
     e.preventDefault();
     
     try {
+      // Transform data to match backend schema
+      const [firstName, ...lastNameParts] = formData.name.split(' ');
+      const lastName = lastNameParts.join(' ');
+      
+      const transformedData = {
+        // Map name to first_name/last_name
+        first_name: firstName,
+        last_name: lastName || '',
+        bio: formData.bio || null,
+        occupation: formData.occupation || null,
+        age: formData.age ? parseInt(formData.age) : null,
+        gender: formData.gender || null,
+        // Convert string booleans to actual booleans
+        is_smoker: formData.isSmoker === 'true' ? true : formData.isSmoker === 'false' ? false : null,
+        has_pets: formData.hasPets === 'true' ? true : formData.hasPets === 'false' ? false : null,
+        drinking_habits: formData.drinkingHabits || null,
+        sleep_schedule: formData.sleepSchedule || null,
+        cleanliness: formData.cleanliness || null,
+        interests: formData.interests || null,
+        hobbies: formData.hobbies || null,
+        // Fix snake_case field names
+        music_preference: formData.musicPreference || null,
+        food_preference: formData.foodPreference || null
+      };
+
+      console.log('Sending profile data:', transformedData);
+
       const response = await fetch(`${API_BASE_URL}/users/me/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(transformedData)
       });
       
       if (!response.ok) {
@@ -62,7 +89,14 @@ const EditProfilePage = () => {
         throw new Error(errorData.detail || 'Failed to update profile');
       }
 
+      const updatedUser = await response.json();
+      console.log('Profile updated:', updatedUser);
+
       toast.success("Profile updated successfully!");
+      
+      // Trigger a refresh of user data in AuthContext
+      window.location.reload(); // Force reload to get fresh data
+      
       navigate('/profile');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to update profile');
