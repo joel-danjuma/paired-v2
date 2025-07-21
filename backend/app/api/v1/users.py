@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, or_, func
 from sqlalchemy.orm import selectinload
 from uuid import UUID
 from typing import List
@@ -21,6 +21,38 @@ from app.core.deps import get_current_user
 from app.services import verification_service
 
 router = APIRouter()
+
+@router.get("/search", response_model=List[UserPublicProfile])
+async def search_users(
+    query: str = Query(..., min_length=2, description="Search query for user name or email"),
+    limit: int = Query(20, le=50, description="Maximum number of results"),
+    db: AsyncSession = Depends(get_db_session),
+    current_user: User = Depends(get_current_user)
+):
+    """Search for users by name or email"""
+    
+    # Build search query
+    search_query = (
+        select(User)
+        .where(
+            User.is_active == True,
+            User.id != current_user.id,  # Exclude current user from results
+            or_(
+                func.lower(User.first_name).contains(func.lower(query)),
+                func.lower(User.last_name).contains(func.lower(query)),
+                func.lower(User.email).contains(func.lower(query)),
+                func.lower(func.concat(User.first_name, ' ', User.last_name)).contains(func.lower(query))
+            )
+        )
+        .limit(limit)
+        .order_by(User.profile_completion_score.desc())  # Order by profile completeness
+    )
+    
+    result = await db.execute(search_query)
+    users = result.scalars().all()
+    
+    # Convert to public profile format
+    return [UserPublicProfile.from_user(user) for user in users]
 
 @router.get("/me", response_model=UserProfile)
 async def get_current_user_profile(

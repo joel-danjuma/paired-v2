@@ -7,8 +7,9 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/contexts/AuthContext';
-import { Send, ArrowLeft, MessageSquare, User } from 'lucide-react';
+import { Send, ArrowLeft, MessageSquare, User, Plus } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
+import UserSearchModal from './UserSearchModal';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1";
 
@@ -39,6 +40,7 @@ const ChatWindow = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [activeContact, setActiveContact] = useState<Contact | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUserSearchModalOpen, setIsUserSearchModalOpen] = useState(false);
 
   // Fetch contacts when component mounts
   useEffect(() => {
@@ -148,7 +150,17 @@ const ChatWindow = () => {
       {/* Contacts Sidebar */}
       <div className="hidden md:block md:col-span-1 lg:col-span-1 bg-white border-r">
         <div className="p-4 border-b">
-          <h2 className="font-semibold text-lg">Messages</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold text-lg">Messages</h2>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setIsUserSearchModalOpen(true)}
+              className="h-8 w-8 p-0"
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
         <ScrollArea className="h-[calc(100vh-12rem)] md:h-[calc(100vh-20rem)]">
           {isLoading ? (
@@ -159,11 +171,13 @@ const ChatWindow = () => {
             <div className="flex flex-col items-center justify-center h-full p-4 text-center">
               <MessageSquare className="h-12 w-12 text-gray-400 mb-4" />
               <p className="text-gray-600">No conversations yet. Start a new one!</p>
-              <Link to="/messages">
-                <Button className="mt-4 bg-paired-400 hover:bg-paired-500">
-                  New Conversation
-                </Button>
-              </Link>
+              <Button 
+                className="mt-4 bg-paired-400 hover:bg-paired-500"
+                onClick={() => setIsUserSearchModalOpen(true)}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                New Conversation
+              </Button>
             </div>
           ) : (
             contacts.map(contact => (
@@ -365,6 +379,12 @@ const ChatWindow = () => {
           </div>
         )}
       </div>
+      
+      {/* User Search Modal */}
+      <UserSearchModal 
+        isOpen={isUserSearchModalOpen}
+        onClose={() => setIsUserSearchModalOpen(false)}
+      />
     </div>
   );
 };
