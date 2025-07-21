@@ -139,13 +139,35 @@ const OnboardingPage = () => {
     setIsSubmitting(true);
     
     try {
+      // Transform frontend form data to match backend OnboardingData schema
+      const transformedData = {
+        bio: formData.bio || null,
+        occupation: formData.occupation || null,
+        age: formData.age ? parseInt(formData.age) : null,
+        gender: formData.gender || null,
+        // Convert camelCase to snake_case for boolean fields
+        is_smoker: formData.isSmoker,
+        has_pets: formData.hasPets,
+        drinking_habits: formData.drinkingHabits || null,
+        sleep_schedule: formData.sleepSchedule || null,
+        cleanliness: formData.cleanliness || null,
+        guest_preference: formData.guestPreference || null,
+        noise_level: formData.noiseLevel || null,
+        interests: formData.interests || null,
+        hobbies: formData.hobbies || null,
+        music_preference: formData.musicPreference || null,
+        food_preference: formData.foodPreference || null
+      };
+
+      console.log('Sending onboarding data:', transformedData);
+
       const response = await fetch(`${API_BASE_URL}/users/me/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(transformedData)
       });
       
       if (!response.ok) {

@@ -66,41 +66,64 @@ async def update_onboarding_data(
     db: AsyncSession = Depends(get_db_session)
 ):
     """Update user profile with onboarding data."""
-    update_data = onboarding_data.dict(exclude_unset=True)
-    
-    # Separate lifestyle and preferences from the rest of the data
-    lifestyle_data = current_user.lifestyle_data or {}
-    preferences_data = current_user.preferences or {}
-    
-    for key, value in update_data.items():
-        if key in ['is_smoker', 'has_pets', 'drinking_habits', 'sleep_schedule', 'cleanliness', 'guest_preference', 'noise_level']:
-            lifestyle_data[key] = value
-        elif key in ['interests', 'hobbies', 'music_preference', 'food_preference']:
-            preferences_data[key] = value
-        else:
-            setattr(current_user, key, value)
-            
-    current_user.lifestyle_data = lifestyle_data
-    current_user.preferences = preferences_data
-    
-    # Recalculate profile completion score
-    score = 0
-    if current_user.first_name: score += 5
-    if current_user.last_name: score += 5
-    if current_user.date_of_birth or getattr(current_user, 'age', None): score += 10
-    if current_user.bio: score += 15
-    if current_user.profile_image_url: score += 15
-    if current_user.preferences and len(current_user.preferences) > 2: score += 20
-    if current_user.lifestyle_data and len(current_user.lifestyle_data) > 3: score += 20
-    if current_user.is_verified_email: score += 5
-    if current_user.is_verified_phone: score += 5
-    current_user.profile_completion_score = min(score, 100)
+    try:
+        update_data = onboarding_data.dict(exclude_unset=True)
+        
+        # Separate lifestyle and preferences from the rest of the data
+        lifestyle_data = current_user.lifestyle_data or {}
+        preferences_data = current_user.preferences or {}
+        
+        for key, value in update_data.items():
+            if key in ['is_smoker', 'has_pets', 'drinking_habits', 'sleep_schedule', 'cleanliness', 'guest_preference', 'noise_level']:
+                lifestyle_data[key] = value
+            elif key in ['interests', 'hobbies', 'music_preference', 'food_preference']:
+                preferences_data[key] = value
+            elif key == 'age':
+                # Store age in lifestyle_data and optionally calculate date_of_birth
+                if value and isinstance(value, int) and 18 <= value <= 100:
+                    lifestyle_data['age'] = value
+                    # Optionally set approximate date_of_birth if not already set
+                    if not current_user.date_of_birth:
+                        from datetime import datetime, timedelta
+                        approximate_birth_year = datetime.now().year - value
+                        current_user.date_of_birth = datetime(approximate_birth_year, 1, 1)
+            else:
+                setattr(current_user, key, value)
+                
+        current_user.lifestyle_data = lifestyle_data
+        current_user.preferences = preferences_data
+        
+        # Recalculate profile completion score with proper error handling
+        score = 0
+        try:
+            if current_user.first_name: score += 5
+            if current_user.last_name: score += 5
+            if current_user.date_of_birth or lifestyle_data.get('age'): score += 10
+            if current_user.bio: score += 15
+            if current_user.profile_image_url: score += 15
+            if current_user.preferences and len(current_user.preferences) > 2: score += 20
+            if current_user.lifestyle_data and len(current_user.lifestyle_data) > 3: score += 20
+            if current_user.is_verified_email: score += 5
+            if current_user.is_verified_phone: score += 5
+            current_user.profile_completion_score = min(score, 100)
+        except Exception as e:
+            # If profile completion calculation fails, set a default score
+            print(f"Error calculating profile completion score: {e}")
+            current_user.profile_completion_score = 50
 
-    db.add(current_user)
-    await db.commit()
-    await db.refresh(current_user)
-    
-    return current_user
+        db.add(current_user)
+        await db.commit()
+        await db.refresh(current_user)
+        
+        return current_user
+        
+    except Exception as e:
+        await db.rollback()
+        print(f"Error updating onboarding data: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update profile: {str(e)}"
+        )
 
 @router.get("/{user_id}", response_model=UserPublicProfile)
 async def get_user_public_profile(

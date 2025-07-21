@@ -27,6 +27,7 @@ type AuthContextType = {
   login: (email: string, password: string, fromRegistration?: boolean) => Promise<boolean>;
   register: (name: string, email: string, password: string, userType: string) => Promise<boolean>;
   logout: () => void;
+  refreshUser: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -205,8 +206,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     toast.success("Logged out successfully");
   };
 
+  const refreshUser = async () => {
+    if (token) {
+      await fetchUserProfile(token);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, token, login, register, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, token, login, register, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

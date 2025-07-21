@@ -15,7 +15,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api/
 
 const EditProfilePage = () => {
   const navigate = useNavigate();
-  const { user, token } = useAuth();
+  const { user, token, refreshUser } = useAuth();
   
   // Initialize form with current user data
   const [formData, setFormData] = useState({
@@ -94,9 +94,10 @@ const EditProfilePage = () => {
 
       toast.success("Profile updated successfully!");
       
-      // Trigger a refresh of user data in AuthContext
-      window.location.reload(); // Force reload to get fresh data
+      // Refresh user data in AuthContext
+      await refreshUser();
       
+      // Navigate back to profile page
       navigate('/profile');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to update profile');
