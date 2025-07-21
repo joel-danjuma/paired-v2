@@ -4,6 +4,7 @@ from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
 from typing import List, Optional
 from uuid import UUID
+from datetime import datetime, timezone
 from geoalchemy2.functions import ST_DWithin
 
 from app.models.database import get_db_session
@@ -50,15 +51,14 @@ async def create_listing(
         listing_dict = listing_data.dict()
         
         # Handle timezone-aware datetime conversion for database compatibility
-        from datetime import datetime
         for field_name in ['available_from', 'available_until']:
             if field_name in listing_dict and listing_dict[field_name] is not None:
                 dt_value = listing_dict[field_name]
                 if isinstance(dt_value, datetime) and dt_value.tzinfo is not None:
                     # Convert timezone-aware datetime to UTC and make it timezone-naive
                     # This is temporary until database migration is applied
-                    listing_dict[field_name] = dt_value.utctimetuple()
-                    listing_dict[field_name] = datetime(*listing_dict[field_name][:6])
+                    utc_dt = dt_value.astimezone(timezone.utc)
+                    listing_dict[field_name] = utc_dt.replace(tzinfo=None)
         
         new_listing = Listing(
             **listing_dict,
