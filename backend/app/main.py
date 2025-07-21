@@ -68,6 +68,17 @@ app.include_router(api_router, prefix="/api/v1")
 async def health_check():
     return {"status": "healthy", "service": "paired-backend"}
 
+# Debug endpoint to check static files configuration
+@app.get("/api/v1/debug/static")
+async def debug_static():
+    return {
+        "static_dir": STATIC_DIR,
+        "static_dir_exists": os.path.exists(STATIC_DIR),
+        "environment": settings.environment,
+        "debug": settings.debug,
+        "files_in_static_dir": os.listdir(STATIC_DIR) if os.path.exists(STATIC_DIR) else []
+    }
+
 # Mount static files BEFORE catch-all routes
 if os.path.exists(STATIC_DIR):
     app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static")

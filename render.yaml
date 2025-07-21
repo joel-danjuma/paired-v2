@@ -19,6 +19,10 @@ services:
           type: redis
           name: paired-redis
           property: connectionString
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: false
       # Add other environment variables from your .env file here
       # For example:
       # - key: GOOGLE_API_KEY
