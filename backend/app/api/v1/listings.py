@@ -45,18 +45,41 @@ async def create_listing(
     db: AsyncSession = Depends(get_db_session)
 ):
     """Create a new listing"""
-    new_listing = Listing(
-        **listing_data.dict(),
-        user_id=current_user.id
-    )
-    
-    # Placeholder for geocoding address to lat/lon
-    # new_listing.location = 'POINT(lon lat)'
-    
-    db.add(new_listing)
-    await db.commit()
-    await db.refresh(new_listing)
-    return new_listing
+    try:
+        # Convert listing data to dict and handle timezone-aware datetime fields
+        listing_dict = listing_data.dict()
+        
+        # Handle timezone-aware datetime conversion for database compatibility
+        from datetime import datetime
+        for field_name in ['available_from', 'available_until']:
+            if field_name in listing_dict and listing_dict[field_name] is not None:
+                dt_value = listing_dict[field_name]
+                if isinstance(dt_value, datetime) and dt_value.tzinfo is not None:
+                    # Convert timezone-aware datetime to UTC and make it timezone-naive
+                    # This is temporary until database migration is applied
+                    listing_dict[field_name] = dt_value.utctimetuple()
+                    listing_dict[field_name] = datetime(*listing_dict[field_name][:6])
+        
+        new_listing = Listing(
+            **listing_dict,
+            user_id=current_user.id
+        )
+        
+        # Placeholder for geocoding address to lat/lon
+        # new_listing.location = 'POINT(lon lat)'
+        
+        db.add(new_listing)
+        await db.commit()
+        await db.refresh(new_listing)
+        return new_listing
+        
+    except Exception as e:
+        await db.rollback()
+        print(f"Error creating listing: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create listing: {str(e)}"
+        )
 
 @router.get("/search", response_model=List[ListingWithUser])
 async def search_listings(

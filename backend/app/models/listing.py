@@ -54,8 +54,8 @@ class Listing(Base):
     images = Column(JSON, nullable=True)  # Array of image URLs
     
     # Availability
-    available_from = Column(DateTime, nullable=True)
-    available_until = Column(DateTime, nullable=True)
+    available_from = Column(DateTime(timezone=True), nullable=True)
+    available_until = Column(DateTime(timezone=True), nullable=True)
     
     # Metrics
     view_count = Column(Integer, default=0)
