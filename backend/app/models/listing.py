@@ -33,6 +33,7 @@ class Listing(Base):
     description = Column(Text, nullable=True)
     
     # Location (using simple string instead of PostGIS Geography for compatibility)
+    # NOTE: This may require database migration if existing column is geometry type
     location = Column(String(500), nullable=True)  # Store as "lat,lon" or address string
     address = Column(String(500), nullable=True)
     city = Column(String(100), nullable=True)

@@ -59,6 +59,40 @@ async def init_db():
         except Exception as e:
             print(f"pgvector extension not available (likely on managed database): {e}")
         
+        # Check if listings table exists and has geometry column
+        try:
+            result = await conn.execute(text("""
+                SELECT column_name, data_type 
+                FROM information_schema.columns 
+                WHERE table_name = 'listings' AND column_name = 'location'
+            """))
+            location_column = result.fetchone()
+            
+            if location_column and 'geometry' in str(location_column[1]).lower():
+                print("Found geometry column in listings table, converting to varchar...")
+                # Convert geometry column to varchar to avoid type conflicts
+                try:
+                    await conn.execute(text("""
+                        ALTER TABLE listings 
+                        ALTER COLUMN location TYPE VARCHAR(500) 
+                        USING ST_AsText(location)::VARCHAR(500)
+                    """))
+                    print("Successfully converted location column from geometry to varchar")
+                except Exception as e:
+                    print(f"Could not convert location column (trying alternative): {e}")
+                    # Alternative: drop and recreate column
+                    try:
+                        await conn.execute(text("ALTER TABLE listings DROP COLUMN location"))
+                        await conn.execute(text("ALTER TABLE listings ADD COLUMN location VARCHAR(500)"))
+                        print("Dropped and recreated location column as varchar")
+                    except Exception as e2:
+                        print(f"Could not fix location column: {e2}")
+            else:
+                print("Location column is already varchar or doesn't exist")
+                
+        except Exception as e:
+            print(f"Could not check/fix location column: {e}")
+        
         # Create all tables
         try:
             await conn.run_sync(Base.metadata.create_all)

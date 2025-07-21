@@ -66,8 +66,14 @@ async def create_listing(
                 detail="Listing type is required"
             )
         
-        # Remove any None values and invalid fields
+        # Remove any None values and problematic fields
         clean_dict = {k: v for k, v in listing_dict.items() if v is not None}
+        
+        # Temporarily exclude location field to avoid geometry/varchar conflicts
+        if 'location' in clean_dict:
+            print(f"Temporarily excluding location field: {clean_dict['location']}")
+            del clean_dict['location']
+        
         print(f"Clean listing data: {clean_dict}")
         
         new_listing = Listing(
