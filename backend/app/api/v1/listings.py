@@ -6,6 +6,7 @@ from typing import List, Optional
 from uuid import UUID
 from datetime import datetime, timezone
 from geoalchemy2.functions import ST_DWithin
+import traceback
 
 from app.models.database import get_db_session
 from app.models.user import User
@@ -49,6 +50,7 @@ async def create_listing(
     try:
         # Convert listing data to dict and handle timezone-aware datetime fields
         listing_dict = listing_data.dict()
+        print(f"Received listing data: {listing_dict}")
         
         # Handle timezone-aware datetime conversion for database compatibility
         for field_name in ['available_from', 'available_until']:
@@ -60,22 +62,36 @@ async def create_listing(
                     utc_dt = dt_value.astimezone(timezone.utc)
                     listing_dict[field_name] = utc_dt.replace(tzinfo=None)
         
+        # Remove any None values and invalid fields
+        clean_dict = {k: v for k, v in listing_dict.items() if v is not None}
+        print(f"Clean listing data: {clean_dict}")
+        
         new_listing = Listing(
-            **listing_dict,
+            **clean_dict,
             user_id=current_user.id
         )
+        
+        print(f"Created listing object: {new_listing}")
         
         # Placeholder for geocoding address to lat/lon
         # new_listing.location = 'POINT(lon lat)'
         
         db.add(new_listing)
+        print("Added listing to session")
+        
         await db.commit()
+        print("Committed to database")
+        
         await db.refresh(new_listing)
+        print(f"Refreshed listing: {new_listing}")
+        
         return new_listing
         
     except Exception as e:
         await db.rollback()
+        error_traceback = traceback.format_exc()
         print(f"Error creating listing: {e}")
+        print(f"Full traceback: {error_traceback}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to create listing: {str(e)}"

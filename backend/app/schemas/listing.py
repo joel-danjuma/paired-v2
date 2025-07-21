@@ -44,14 +44,22 @@ class ListingUpdate(ListingBase):
     status: Optional[ListingStatus] = None
 
 class Listing(ListingBase):
-    id: int
-    owner_id: int
+    id: UUID
+    user_id: UUID
+    status: ListingStatus
     created_at: datetime
     updated_at: datetime
-    owner: "User"
 
     class Config:
         from_attributes = True
 
-class ListingWithUser(Listing):
+class ListingWithUser(ListingBase):
+    id: UUID
+    user_id: UUID
+    status: ListingStatus
+    created_at: datetime
+    updated_at: datetime
     user: "UserPublicProfile"
+
+    class Config:
+        from_attributes = True
