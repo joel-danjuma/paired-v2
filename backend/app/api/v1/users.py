@@ -70,13 +70,14 @@ async def update_onboarding_data(
     
     for key, value in update_data.items():
         if key in ['is_smoker', 'has_pets', 'drinking_habits', 'sleep_schedule', 'cleanliness', 'guest_preference', 'noise_level']:
-            if value:
+            if value is not None:
                 lifestyle_data[key] = value
         elif key in ['interests', 'hobbies', 'music_preference', 'food_preference']:
-            if value:
+            if value is not None:
                 preferences_data[key] = value
         else:
-            setattr(current_user, key, value)
+            if value is not None:
+                setattr(current_user, key, value)
             
     if lifestyle_data:
         current_user.lifestyle_data = lifestyle_data

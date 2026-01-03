@@ -17,6 +17,8 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1";
+
 const OnboardingPage = () => {
   const navigate = useNavigate();
   const { user, token } = useAuth();
@@ -28,19 +30,19 @@ const OnboardingPage = () => {
     occupation: '',
     age: '',
     gender: '',
-    // Preferences
-    isSmoker: false,
-    hasPets: false,
-    drinkingHabits: 'occasionally',
-    sleepSchedule: 'normal',
+    // Preferences (using snake_case to match backend)
+    is_smoker: false,
+    has_pets: false,
+    drinking_habits: 'occasionally',
+    sleep_schedule: 'normal',
     cleanliness: 'average',
-    guestPreference: 'occasionally',
-    noiseLevel: 'moderate',
+    guest_preference: 'occasionally',
+    noise_level: 'moderate',
     // Interests
     interests: '',
     hobbies: '',
-    musicPreference: '',
-    foodPreference: ''
+    music_preference: '',
+    food_preference: ''
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -69,7 +71,7 @@ const OnboardingPage = () => {
     setIsSubmitting(true);
     
     try {
-      const response = await fetch('/api/v1/users/me/profile', {
+      const response = await fetch(`${API_BASE_URL}/users/me/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -200,8 +202,8 @@ const OnboardingPage = () => {
                   </div>
                   <Switch 
                     id="smoking" 
-                    checked={formData.isSmoker}
-                    onCheckedChange={(checked) => handleSwitchChange('isSmoker', checked)}
+                    checked={formData.is_smoker}
+                    onCheckedChange={(checked) => handleSwitchChange('is_smoker', checked)}
                   />
                 </div>
 
@@ -212,16 +214,16 @@ const OnboardingPage = () => {
                   </div>
                   <Switch 
                     id="pets" 
-                    checked={formData.hasPets}
-                    onCheckedChange={(checked) => handleSwitchChange('hasPets', checked)}
+                    checked={formData.has_pets}
+                    onCheckedChange={(checked) => handleSwitchChange('has_pets', checked)}
                   />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="drinking">Drinking Habits</Label>
                   <Select 
-                    value={formData.drinkingHabits} 
-                    onValueChange={(value) => handleSelectChange('drinkingHabits', value)}
+                    value={formData.drinking_habits} 
+                    onValueChange={(value) => handleSelectChange('drinking_habits', value)}
                   >
                     <SelectTrigger id="drinking">
                       <SelectValue placeholder="Select option" />
@@ -238,8 +240,8 @@ const OnboardingPage = () => {
                 <div className="space-y-2">
                   <Label htmlFor="sleep">Sleep Schedule</Label>
                   <Select 
-                    value={formData.sleepSchedule} 
-                    onValueChange={(value) => handleSelectChange('sleepSchedule', value)}
+                    value={formData.sleep_schedule} 
+                    onValueChange={(value) => handleSelectChange('sleep_schedule', value)}
                   >
                     <SelectTrigger id="sleep">
                       <SelectValue placeholder="Select option" />
@@ -274,8 +276,8 @@ const OnboardingPage = () => {
                 <div className="space-y-2">
                   <Label htmlFor="noise">Noise Level Preference</Label>
                   <Select 
-                    value={formData.noiseLevel} 
-                    onValueChange={(value) => handleSelectChange('noiseLevel', value)}
+                    value={formData.noise_level} 
+                    onValueChange={(value) => handleSelectChange('noise_level', value)}
                   >
                     <SelectTrigger id="noise">
                       <SelectValue placeholder="Select option" />
@@ -326,9 +328,9 @@ const OnboardingPage = () => {
                   <Label htmlFor="music">Music Preferences</Label>
                   <Input 
                     id="music" 
-                    name="musicPreference" 
+                    name="music_preference" 
                     placeholder="What kind of music do you enjoy?"
-                    value={formData.musicPreference}
+                    value={formData.music_preference}
                     onChange={handleChange}
                   />
                 </div>
@@ -337,9 +339,9 @@ const OnboardingPage = () => {
                   <Label htmlFor="food">Food Preferences</Label>
                   <Input 
                     id="food" 
-                    name="foodPreference" 
+                    name="food_preference" 
                     placeholder="Any dietary preferences or restrictions?"
-                    value={formData.foodPreference}
+                    value={formData.food_preference}
                     onChange={handleChange}
                   />
                 </div>
