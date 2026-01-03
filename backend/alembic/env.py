@@ -1,4 +1,5 @@
 from logging.config import fileConfig
+import os
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
@@ -27,6 +28,18 @@ target_metadata = Base.metadata
 # ... etc.
 
 
+def get_url():
+    """Get database URL, converting async URL to sync URL for Alembic"""
+    # Get URL from environment variable first, then from config
+    url = os.getenv("DATABASE_URL") or config.get_main_option("sqlalchemy.url")
+    
+    # Convert asyncpg URL to psycopg2 (sync) URL for Alembic
+    if url and "+asyncpg" in url:
+        url = url.replace("+asyncpg", "+psycopg2")
+    
+    return url
+
+
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.
 
@@ -39,7 +52,7 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    url = config.get_main_option("sqlalchemy.url")
+    url = get_url()
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -58,8 +71,15 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
+    # Get the URL and convert to sync
+    url = get_url()
+    
+    # Override the sqlalchemy.url in config
+    configuration = config.get_section(config.config_ini_section, {})
+    configuration["sqlalchemy.url"] = url
+    
     connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
+        configuration,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
