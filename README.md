@@ -1,4 +1,4 @@
-clea# Paired - Your AI-Powered Roommate Matching Platform
+# Paired - Your AI-Powered Roommate Matching Platform
 
 Paired is a modern web application designed to help you find the perfect roommate. Our intelligent platform uses AI to understand your preferences and match you with compatible individuals, making the search for a roommate seamless and efficient.
 
@@ -67,8 +67,19 @@ The application's configuration is managed through environment variables. You ca
 
 ## 🚀 Deployment
 
-This application is configured for deployment on Render. The `render.yaml` file in the root directory defines the services and deployment configuration.
+This application supports multiple deployment options:
 
-## 📚 API Documentation
+*   **VPS Deployment (Ubuntu + Docker):** See [VPS-DEPLOYMENT.md](VPS-DEPLOYMENT.md) for detailed instructions on deploying to Hostinger, DigitalOcean, AWS EC2, or any Ubuntu-based VPS.
+*   **Render Deployment:** See [DEPLOYMENT.md](DEPLOYMENT.md) for deployment instructions using Render's platform.
 
-For detailed information about the API endpoints, please see the [API Documentation](docs/api.md). 
+The application includes:
+- `docker-compose.prod.yml` - Production Docker Compose configuration
+- `nginx.conf` - Nginx reverse proxy configuration
+- `Dockerfile.postgres` - Custom PostgreSQL image with PostGIS and pgvector
+
+## 📚 Documentation
+
+*   [API Documentation](docs/api.md) - Detailed API endpoint documentation
+*   [Product Requirements Document](docs/PRD.md) - Complete application specification
+*   [VPS Deployment Guide](VPS-DEPLOYMENT.md) - Step-by-step VPS deployment
+*   [Render Deployment Guide](DEPLOYMENT.md) - Render platform deployment 

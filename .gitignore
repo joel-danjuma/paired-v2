@@ -1,0 +1,62 @@
+# Environment variables
+.env
+*.env
+!env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+._*
+Thumbs.db
+
+# Docker
+*.log
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Redis
+dump.rdb
+
+# Test coverage
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Build outputs
+dist/
+build/
+*.egg-info/
+
+# Logs
+logs/
+*.log
+

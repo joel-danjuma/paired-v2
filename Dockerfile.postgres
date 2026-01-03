@@ -1,0 +1,19 @@
+FROM postgis/postgis:15-3.4
+
+# Install build dependencies for pgvector (including correct clang version)
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    git \
+    postgresql-server-dev-15 \
+    clang-13 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install pgvector extension
+RUN cd /tmp && \
+    git clone --branch v0.5.1 https://github.com/pgvector/pgvector.git && \
+    cd pgvector && \
+    make && \
+    make install && \
+    cd / && \
+    rm -rf /tmp/pgvector
+
