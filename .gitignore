@@ -30,10 +30,20 @@ yarn-error.log*
 *.swo
 *~
 
-# OS
+# OS - macOS
 .DS_Store
+.DS_Store?
 ._*
+.AppleDouble
+.LSOverride
+.Spotlight-V100
+.Trashes
+
+# OS - Windows
 Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+Desktop.ini
 
 # Docker
 *.log
