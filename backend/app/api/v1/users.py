@@ -69,13 +69,18 @@ async def update_onboarding_data(
     preferences_data = current_user.preferences or {}
     
     for key, value in update_data.items():
-        if key in ['is_smoker', 'has_pets', 'drinking_habits', 'sleep_schedule', 'cleanliness', 'guest_preference', 'noise_level']:
+        # Lifestyle fields - store in lifestyle_data JSON
+        if key in ['is_smoker', 'has_pets', 'drinking_habits', 'sleep_schedule', 
+                   'cleanliness', 'guest_preference', 'noise_level', 
+                   'occupation', 'age', 'gender']:
             if value is not None:
                 lifestyle_data[key] = value
+        # Preference fields - store in preferences JSON
         elif key in ['interests', 'hobbies', 'music_preference', 'food_preference']:
             if value is not None:
                 preferences_data[key] = value
-        else:
+        # Direct user model fields (only bio)
+        elif key == 'bio':
             if value is not None:
                 setattr(current_user, key, value)
             
@@ -83,6 +88,17 @@ async def update_onboarding_data(
         current_user.lifestyle_data = lifestyle_data
     if preferences_data:
         current_user.preferences = preferences_data
+    
+    # Recalculate profile completion score
+    score = 0
+    if current_user.first_name: score += 10
+    if current_user.last_name: score += 10
+    if current_user.date_of_birth: score += 10
+    if current_user.bio: score += 20
+    if current_user.profile_image_url: score += 20
+    if current_user.preferences: score += 15
+    if current_user.lifestyle_data: score += 15
+    current_user.profile_completion_score = score
     
     db.add(current_user)
     await db.commit()

@@ -25,6 +25,13 @@ class UserProfile(UserBase):
     created_at: datetime
     last_active: Optional[datetime]
     
+    # Additional profile fields
+    bio: Optional[str] = None
+    date_of_birth: Optional[datetime] = None
+    phone: Optional[str] = None
+    preferences: Optional[Dict] = None
+    lifestyle_data: Optional[Dict] = None
+    
     class Config:
         from_attributes = True
 

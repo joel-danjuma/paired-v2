@@ -39,6 +39,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Fetch user profile from API
+  const fetchUserProfile = async (accessToken: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/users/me`, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        }
+      });
+      
+      if (response.ok) {
+        const userData = await response.json();
+        setUser({
+          id: userData.id,
+          email: userData.email,
+          user_type: userData.user_type,
+          first_name: userData.first_name,
+          last_name: userData.last_name,
+          name: `${userData.first_name || ''} ${userData.last_name || ''}`.trim() || userData.email,
+          profilePic: userData.profile_image_url
+        });
+      }
+    } catch (error) {
+      console.error("Failed to fetch user profile:", error);
+    }
+  };
+
   useEffect(() => {
     const storedToken = localStorage.getItem('pairedToken');
     if (storedToken) {
@@ -47,7 +73,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (decoded.exp * 1000 > Date.now()) {
           setToken(storedToken);
           // Fetch user profile based on token
-          // This part would be implemented with a /users/me endpoint
+          fetchUserProfile(storedToken);
         } else {
           localStorage.removeItem('pairedToken');
         }
@@ -74,19 +100,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       const data = await response.json();
-      const decoded: any = jwtDecode(data.access_token);
-      
-      const loggedInUser: User = {
-        id: decoded.sub,
-        email: email, // Email is not in token, but we have it
-        name: decoded.name, // Assuming name is in token
-        profilePic: decoded.picture, // Assuming picture is in token
-        user_type: 'seeker' // Placeholder
-      };
-
-      setUser(loggedInUser);
       setToken(data.access_token);
       localStorage.setItem('pairedToken', data.access_token);
+      
+      // Fetch full user profile
+      await fetchUserProfile(data.access_token);
+      
       if (!fromRegistration) {
         toast.success("Successfully logged in!");
       }

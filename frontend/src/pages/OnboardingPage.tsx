@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -24,6 +24,7 @@ const OnboardingPage = () => {
   const { user, token } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [formData, setFormData] = useState({
     // Basic info
     bio: '',
@@ -44,6 +45,56 @@ const OnboardingPage = () => {
     music_preference: '',
     food_preference: ''
   });
+
+  // Load existing user data if available
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!token) {
+        setIsLoading(false);
+        return;
+      }
+      
+      try {
+        const response = await fetch(`${API_BASE_URL}/users/me`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const userData = await response.json();
+          
+          // Extract data from user object and nested objects
+          const lifestyle = userData.lifestyle_data || {};
+          const preferences = userData.preferences || {};
+          
+          setFormData({
+            bio: userData.bio || '',
+            occupation: lifestyle.occupation || '',
+            age: lifestyle.age ? String(lifestyle.age) : '',
+            gender: lifestyle.gender || '',
+            is_smoker: lifestyle.is_smoker || false,
+            has_pets: lifestyle.has_pets || false,
+            drinking_habits: lifestyle.drinking_habits || 'occasionally',
+            sleep_schedule: lifestyle.sleep_schedule || 'normal',
+            cleanliness: lifestyle.cleanliness || 'average',
+            guest_preference: lifestyle.guest_preference || 'occasionally',
+            noise_level: lifestyle.noise_level || 'moderate',
+            interests: preferences.interests || '',
+            hobbies: preferences.hobbies || '',
+            music_preference: preferences.music_preference || '',
+            food_preference: preferences.food_preference || ''
+          });
+        }
+      } catch (error) {
+        console.error('Failed to fetch profile:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUserProfile();
+  }, [token]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -93,6 +144,16 @@ const OnboardingPage = () => {
       setIsSubmitting(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="container max-w-3xl py-16 mx-auto px-4">
+        <div className="text-center">
+          <p>Loading your profile...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container max-w-3xl py-16 mx-auto px-4">
