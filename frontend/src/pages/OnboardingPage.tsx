@@ -194,7 +194,6 @@ const OnboardingPage = () => {
                     placeholder="Write a short bio about yourself" 
                     value={formData.bio}
                     onChange={handleChange}
-                    required
                   />
                 </div>
 
@@ -210,7 +209,6 @@ const OnboardingPage = () => {
                       placeholder="Your age"
                       value={formData.age}
                       onChange={handleChange}
-                      required
                     />
                   </div>
                   <div className="space-y-2">
@@ -412,7 +410,14 @@ const OnboardingPage = () => {
 
           <CardFooter className="flex justify-between">
             {currentStep > 1 ? (
-              <Button type="button" variant="outline" onClick={handleBack}>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleBack();
+                }}
+              >
                 Back
               </Button>
             ) : (
@@ -420,7 +425,13 @@ const OnboardingPage = () => {
             )}
             
             {currentStep < 3 ? (
-              <Button type="button" onClick={handleNext}>
+              <Button 
+                type="button" 
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleNext();
+                }}
+              >
                 Next
               </Button>
             ) : (
