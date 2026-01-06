@@ -58,8 +58,8 @@ const CreateListingPage = () => {
   const [isPremiumSelected, setIsPremiumSelected] = useState(false);
   const [imagePreview, setImagePreview] = useState<string[]>([]);
   
-  // Mock verification status - in real app, this would come from user context or API
-  const [verificationStatus, setVerificationStatus] = useState<'unverified' | 'pending' | 'verified' | 'rejected'>('unverified');
+  // Mock verification status - temporarily set to 'verified' to bypass identity verification
+  const [verificationStatus, setVerificationStatus] = useState<'unverified' | 'pending' | 'verified' | 'rejected'>('verified');
 
   const form = useForm<ListingFormValues>({
     defaultValues: {
