@@ -96,5 +96,33 @@ app.add_middleware(
 app.include_router(api_router, prefix="/api/v1")
 
 # Mount static files for the frontend
-# This will serve index.html for any path that is not an API call or a file
-app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static") 
+if os.path.exists(STATIC_DIR):
+    # Check if assets directory exists (Vite default structure)
+    assets_dir = os.path.join(STATIC_DIR, "assets")
+    if os.path.exists(assets_dir):
+        # Serve static assets (CSS, JS, images, etc.)
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+    
+    # Catch-all route to serve index.html for SPA routing
+    # This MUST be defined after all API routes are included
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str):
+        """
+        Serve the React SPA for all non-API routes.
+        This enables client-side routing to work on page refresh.
+        """
+        # Check if the requested path is a file with an extension
+        if "." in full_path.split("/")[-1]:
+            # Try to serve the actual file
+            file_path = os.path.join(STATIC_DIR, full_path)
+            if os.path.exists(file_path) and os.path.isfile(file_path):
+                return FileResponse(file_path)
+        
+        # Otherwise, serve index.html for SPA routing
+        index_path = os.path.join(STATIC_DIR, "index.html")
+        if os.path.exists(index_path):
+            return FileResponse(index_path)
+        
+        return Response(content="Frontend not built", status_code=404)
+else:
+    print(f"Warning: Static directory {STATIC_DIR} does not exist") 
